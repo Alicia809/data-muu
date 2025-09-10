@@ -1,13 +1,22 @@
 "use client"
 
+
+import "./registro-herraduras.css"
+
+
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { MdBuild, MdAdd, MdEdit, MdDelete, MdSearch, MdArrowBack, MdImage, MdSave, MdCancel } from "react-icons/md"
+import {
+  MdLogout,
+} from "react-icons/md"
+import { TbHorseshoe } from "react-icons/tb"
 
 export default function HerradurasPage() {
   const [showForm, setShowForm] = useState(false)
@@ -16,51 +25,30 @@ export default function HerradurasPage() {
   const [selectedImage, setSelectedImage] = useState(null)
   const [formData, setFormData] = useState({
     codigo: "",
-    tipo: "",
-    tamaño: "",
-    material: "",
-    peso: "",
-    estado: "",
-    fechaFabricacion: "",
     propietario: "",
-    telefono: "",
-    email: "",
-    direccion: "",
     observaciones: "",
     imagen: null,
   })
+
+  const handleLogout = () => {
+    // Aquí conectarías con tu API de logout
+    console.log("Cerrando sesión...")
+    window.location.href = "/login"
+  }
 
   // Datos de ejemplo
   const [herraduras, setHerraduras] = useState([
     {
       id: 1,
       codigo: "HRD-001",
-      tipo: "Herradura Estándar",
-      tamaño: "Talla 3",
-      material: "Acero Forjado",
-      peso: "250g",
-      estado: "Nueva",
-      fechaFabricacion: "2024-01-15",
       propietario: "Carlos Mendoza",
-      telefono: "555-0789",
-      email: "carlos@email.com",
-      direccion: "Calle Principal 123",
       observaciones: "Herradura para caballo de trabajo",
       imagen: "/herradura-acero.png",
     },
     {
       id: 2,
       codigo: "HRD-002",
-      tipo: "Herradura Terapéutica",
-      tamaño: "Talla 4",
-      material: "Aluminio",
-      peso: "180g",
-      estado: "Usada",
-      fechaFabricacion: "2023-12-10",
       propietario: "Ana Rodríguez",
-      telefono: "555-0321",
-      email: "ana@email.com",
-      direccion: "Avenida Central 456",
       observaciones: "Herradura especial para rehabilitación",
       imagen: "/herradura-aluminio.png",
     },
@@ -90,16 +78,7 @@ export default function HerradurasPage() {
   const resetForm = () => {
     setFormData({
       codigo: "",
-      tipo: "",
-      tamaño: "",
-      material: "",
-      peso: "",
-      estado: "",
-      fechaFabricacion: "",
       propietario: "",
-      telefono: "",
-      email: "",
-      direccion: "",
       observaciones: "",
       imagen: null,
     })
@@ -132,53 +111,76 @@ export default function HerradurasPage() {
     }
   }
 
-  const filteredHerraduras = herraduras.filter(
-    (herradura) =>
-      herradura.codigo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      herradura.tipo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      herradura.propietario.toLowerCase().includes(searchTerm.toLowerCase()),
+  const filteredHerraduras = herraduras.filter((h) =>
+    [h.codigo, h.propietario].some((field) =>
+      field.toLowerCase().includes(searchTerm.toLowerCase())
+    )
   )
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="bg-card border-b border-border px-4 py-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              <img
+                src="/logo2.png"
+                alt="Logo"
+                className="w-50"
+              />
+            </div>
+          </div>
+          <div className="flex items-center space-x-2">
+            <span className="text-sm text-muted-foreground hidden sm:block">Bienvenido, Usuario</span>
+            <Button variant="ghost" size="sm" onClick={handleLogout} className="logout-button">
+              <MdLogout className="h-4 w-4 mr-2" />
+              Salir
+            </Button>
+          </div>
+        </div>
+      </header>      
+      <div className="max-w-7xl mx-auto pt-5">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center space-x-4">
-            <Button variant="ghost" onClick={() => (window.location.href = "/dashboard")}>
+            <Button variant="ghost" onClick={() => (window.location.href = "/dashboard")} className="regresar-btn">
               <MdArrowBack className="h-4 w-4 mr-2" />
-              Volver al Dashboard
+              Panel Principal
             </Button>
             <div>
               <h1 className="text-2xl font-bold text-foreground flex items-center space-x-2">
-                <MdBuild className="h-6 w-6 text-primary" />
-                <span>Registro de Herraduras</span>
+                <TbHorseshoe className="h-6 w-6 text-primary" />
+                <span>Registro de Fierros</span>
               </h1>
               <p className="text-muted-foreground">
-                Gestione el registro de herraduras con imágenes y datos del propietario
+                Gestione el registro de fierros con imágenes y datos del propietario
               </p>
             </div>
           </div>
-          <Button onClick={() => setShowForm(true)}>
-            <MdAdd className="h-4 w-4 mr-2" />
-            Registrar Herradura
-          </Button>
+          {!showForm && (
+            <Button onClick={() => setShowForm(true)} className="nuevo-btn">
+              <MdAdd className="h-4 w-4 mr-2" />
+              Registrar Fierro
+            </Button>
+          )}
         </div>
 
         {showForm ? (
           /* Formulario de registro */
-          <Card className="mb-8">
+          <Card className="mb-8 card-principal">
             <CardHeader>
-              <CardTitle>{editingHerradura ? "Editar Herradura" : "Registrar Nueva Herradura"}</CardTitle>
-              <CardDescription>Complete la información de la herradura y del propietario</CardDescription>
+              <CardTitle>{editingHerradura ? "Editar Herradura" : "Registrar Nuevo Fierro"}</CardTitle>
+              <CardDescription>Complete la información del Fierro y del propietario</CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {/* Imagen */}
                   <div className="space-y-4">
-                    <Label>Imagen de la Herradura</Label>
-                    <div className="border-2 border-dashed border-border rounded-lg p-6 text-center">
+                    <Label>Imagen del Fierro</Label>
+                    <div className="border-2 border-dashed border-border rounded-lg p-6 text-center card-content">
                       {selectedImage ? (
                         <div className="space-y-4">
                           <img
@@ -222,114 +224,29 @@ export default function HerradurasPage() {
                         onChange={(e) => setFormData({ ...formData, codigo: e.target.value })}
                         placeholder="Ej: HRD-001"
                         required
+                        className="card-content"
                       />
                     </div>
-                    <div>
-                      <Label htmlFor="tipo">Tipo de Herradura *</Label>
-                      <Input
-                        id="tipo"
-                        value={formData.tipo}
-                        onChange={(e) => setFormData({ ...formData, tipo: e.target.value })}
-                        placeholder="Ej: Herradura Estándar"
-                        required
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="tamaño">Tamaño</Label>
-                        <Input
-                          id="tamaño"
-                          value={formData.tamaño}
-                          onChange={(e) => setFormData({ ...formData, tamaño: e.target.value })}
-                          placeholder="Ej: Talla 3"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="peso">Peso</Label>
-                        <Input
-                          id="peso"
-                          value={formData.peso}
-                          onChange={(e) => setFormData({ ...formData, peso: e.target.value })}
-                          placeholder="Ej: 250g"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <Label htmlFor="material">Material</Label>
-                      <Input
-                        id="material"
-                        value={formData.material}
-                        onChange={(e) => setFormData({ ...formData, material: e.target.value })}
-                        placeholder="Ej: Acero Forjado"
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="estado">Estado</Label>
-                        <select
-                          id="estado"
-                          value={formData.estado}
-                          onChange={(e) => setFormData({ ...formData, estado: e.target.value })}
-                          className="w-full px-3 py-2 border border-border rounded-md bg-background"
-                        >
-                          <option value="">Seleccionar</option>
-                          <option value="Nueva">Nueva</option>
-                          <option value="Usada">Usada</option>
-                          <option value="Reparada">Reparada</option>
-                          <option value="Descartada">Descartada</option>
-                        </select>
-                      </div>
-                      <div>
-                        <Label htmlFor="fechaFabricacion">Fecha de Fabricación</Label>
-                        <Input
-                          id="fechaFabricacion"
-                          type="date"
-                          value={formData.fechaFabricacion}
-                          onChange={(e) => setFormData({ ...formData, fechaFabricacion: e.target.value })}
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Información del propietario */}
+                    {/* Información del propietario */}
                   <div className="space-y-4">
                     <h3 className="font-medium text-foreground">Datos del Propietario</h3>
                     <div>
-                      <Label htmlFor="propietario">Nombre Completo *</Label>
-                      <Input
-                        id="propietario"
+                      <Label htmlFor="propietario">Nombre del Propietario *</Label>
+                      <Select
                         value={formData.propietario}
-                        onChange={(e) => setFormData({ ...formData, propietario: e.target.value })}
-                        required
-                      />
+                        onValueChange={(value) => setFormData({ ...formData, propietario: value })}
+                      >
+                        <SelectTrigger id="propietario" className="card-content">
+                          <SelectValue placeholder="Seleccione el propietario" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="carlos">Carlos Mendoza</SelectItem>
+                          <SelectItem value="ana">Ana Rodríguez</SelectItem>
+                          <SelectItem value="luis">Luis Fernández</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="telefono">Teléfono</Label>
-                        <Input
-                          id="telefono"
-                          value={formData.telefono}
-                          onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="email">Email</Label>
-                        <Input
-                          id="email"
-                          type="email"
-                          value={formData.email}
-                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <Label htmlFor="direccion">Dirección</Label>
-                      <Input
-                        id="direccion"
-                        value={formData.direccion}
-                        onChange={(e) => setFormData({ ...formData, direccion: e.target.value })}
-                      />
-                    </div>
+                    
                     <div>
                       <Label htmlFor="observaciones">Observaciones</Label>
                       <Textarea
@@ -337,18 +254,21 @@ export default function HerradurasPage() {
                         value={formData.observaciones}
                         onChange={(e) => setFormData({ ...formData, observaciones: e.target.value })}
                         rows={3}
+                        className="card-content"
                       />
                     </div>
+                  </div>
+
+                  
                   </div>
                 </div>
 
                 <div className="flex space-x-4">
-                  <Button type="submit">
+                  <Button type="submit" className="nuevo-btn">
                     <MdSave className="h-4 w-4 mr-2" />
-                    {editingHerradura ? "Actualizar Herradura" : "Registrar Herradura"}
+                    {editingHerradura ? "Actualizar Fierro" : "Registrar Fierro"}
                   </Button>
-                  <Button type="button" variant="outline" onClick={resetForm}>
-                    <MdCancel className="h-4 w-4 mr-2" />
+                  <Button type="button" variant="outline" onClick={resetForm} className="regresar-btn">
                     Cancelar
                   </Button>
                 </div>
@@ -359,13 +279,13 @@ export default function HerradurasPage() {
           /* Lista de herraduras */
           <div className="space-y-6">
             {/* Barra de búsqueda */}
-            <Card>
+            <Card className="card-principal">
               <CardContent className="pt-6">
                 <div className="flex items-center space-x-4">
-                  <div className="relative flex-1">
+                  <div className="relative flex-1 card-content">
                     <MdSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                     <Input
-                      placeholder="Buscar por código, tipo o propietario..."
+                      placeholder="Buscar por código o propietario..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       className="pl-10"
@@ -379,14 +299,15 @@ export default function HerradurasPage() {
             </Card>
 
             {/* Grid de herraduras */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {filteredHerraduras.map((herradura) => (
-                <Card key={herradura.id} className="overflow-hidden">
-                  <div className="aspect-video relative">
+                <Card key={herradura.id} className="overflow-hidden w-[300px] p-4 mx-auto">
+                  <div className="inline-flex items-center justify-center">
                     <img
                       src={herradura.imagen || "/placeholder.svg"}
+                      
                       alt={herradura.codigo}
-                      className="w-full h-full object-cover"
+                      className="w-40 object-cover"
                     />
                   </div>
                   <CardHeader>
@@ -398,29 +319,18 @@ export default function HerradurasPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Tamaño:</span>
-                        <span>{herradura.tamaño}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Material:</span>
-                        <span>{herradura.material}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Peso:</span>
-                        <span>{herradura.peso}</span>
-                      </div>
+                     
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Propietario:</span>
                         <span>{herradura.propietario}</span>
                       </div>
                     </div>
                     <div className="flex space-x-2 mt-4">
-                      <Button size="sm" variant="outline" onClick={() => handleEdit(herradura)}>
+                      <Button size="sm" variant="outline" onClick={() => handleEdit(herradura)} className="nuevo-btn">
                         <MdEdit className="h-4 w-4 mr-1" />
                         Editar
                       </Button>
-                      <Button size="sm" variant="outline" onClick={() => handleDelete(herradura.id)}>
+                      <Button size="sm" variant="outline" onClick={() => handleDelete(herradura.id)} className="regresar-btn">
                         <MdDelete className="h-4 w-4 mr-1" />
                         Eliminar
                       </Button>
@@ -433,16 +343,16 @@ export default function HerradurasPage() {
             {filteredHerraduras.length === 0 && (
               <Card>
                 <CardContent className="text-center py-12">
-                  <MdBuild className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-medium mb-2">No se encontraron herraduras</h3>
+                  <TbHorseshoe className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-medium mb-2">No se encontraron fierros</h3>
                   <p className="text-muted-foreground mb-4">
                     {searchTerm
-                      ? "No hay herraduras que coincidan con su búsqueda."
-                      : "Comience registrando su primera herradura."}
+                      ? "No hay Fierros que coincidan con su búsqueda."
+                      : "Comience registrando su primera Fierro."}
                   </p>
-                  <Button onClick={() => setShowForm(true)}>
+                  <Button onClick={() => setShowForm(true)} className="nuevo-btn">
                     <MdAdd className="h-4 w-4 mr-2" />
-                    Registrar Primera Herradura
+                    Registrar Primer Fierro
                   </Button>
                 </CardContent>
               </Card>

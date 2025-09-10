@@ -1,5 +1,6 @@
 "use client"
 
+import "./registro-clientes.css"
 import type React from "react"
 
 import { useState } from "react"
@@ -11,17 +12,20 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Plus, Search, Edit, Trash2, User, Mail, Phone, MapPin, Building2, Save, X } from "lucide-react"
+import { ArrowLeft, Plus, Search, Edit, Trash2, User, Mail, Phone, IdCard , Building2, Save, X } from "lucide-react"
+import {
+  MdLogout, MdCancel
+} from "react-icons/md"
 
 interface Cliente {
   id: number
   nombre: string
   apellidos: string
-  email: string
+  DNI: string
   telefono: string
   direccion: string
-  ciudad: string
-  codigoPostal: string
+  RTN: string
+  Género: string
   tipoCliente: string
   empresa?: string
   notas?: string
@@ -36,15 +40,21 @@ export default function ClientesPage() {
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
 
+  const handleLogout = () => {
+    // Aquí conectarías con tu API de logout
+    console.log("Cerrando sesión...")
+    window.location.href = "/login"
+  }
+
   // Estado del formulario
   const [formData, setFormData] = useState({
     nombre: "",
     apellidos: "",
-    email: "",
+    DNI: "",
     telefono: "",
     direccion: "",
-    ciudad: "",
-    codigoPostal: "",
+    RTN: "",
+    Género: "",
     tipoCliente: "",
     empresa: "",
     notas: "",
@@ -56,11 +66,11 @@ export default function ClientesPage() {
       id: 1,
       nombre: "Juan",
       apellidos: "Pérez García",
-      email: "juan.perez@email.com",
-      telefono: "+34 600 123 456",
+      DNI: "0318-2000-54321",
+      telefono: "+504 9990-0000",
       direccion: "Calle Mayor 123",
-      ciudad: "Madrid",
-      codigoPostal: "28001",
+      RTN: "0318-2000-543211",
+      Género: "Masculino",
       tipoCliente: "particular",
       notas: "Cliente preferente",
       fechaRegistro: "2024-01-15",
@@ -69,11 +79,11 @@ export default function ClientesPage() {
       id: 2,
       nombre: "María",
       apellidos: "González López",
-      email: "maria.gonzalez@empresa.com",
-      telefono: "+34 600 789 012",
+      DNI: "0318-1990-00000",
+      telefono: "+504 9999-0000",
       direccion: "Avenida Principal 456",
-      ciudad: "Barcelona",
-      codigoPostal: "08001",
+      RTN: "0318-2000-543212",
+      Género: "Femenino",
       tipoCliente: "empresa",
       empresa: "Empresa ABC S.L.",
       fechaRegistro: "2024-01-20",
@@ -91,17 +101,20 @@ export default function ClientesPage() {
     setSuccess("")
 
     // Validación básica
-    if (!formData.nombre || !formData.apellidos || !formData.email || !formData.telefono) {
+    if (!formData.nombre || !formData.apellidos || !formData.DNI || !formData.telefono) {
       setError("Por favor, complete todos los campos obligatorios")
       setIsLoading(false)
       return
     }
 
-    if (!formData.email.includes("@")) {
-      setError("Por favor, ingrese un email válido")
-      setIsLoading(false)
-      return
+    const dniRegex = /^\d{4}-\d{4}-\d{5}$/;
+
+    if (!dniRegex.test(formData.DNI)) {
+      setError("Por favor, ingrese un DNI válido en el formato 0000-0000-00000");
+      setIsLoading(false);
+      return;
     }
+
 
     try {
       // Simulación de llamada a API
@@ -128,11 +141,11 @@ export default function ClientesPage() {
       setFormData({
         nombre: "",
         apellidos: "",
-        email: "",
+        DNI: "",
         telefono: "",
         direccion: "",
-        ciudad: "",
-        codigoPostal: "",
+        RTN: "",
+        Género: "",
         tipoCliente: "",
         empresa: "",
         notas: "",
@@ -150,11 +163,11 @@ export default function ClientesPage() {
     setFormData({
       nombre: cliente.nombre,
       apellidos: cliente.apellidos,
-      email: cliente.email,
+      DNI: cliente.DNI,
       telefono: cliente.telefono,
       direccion: cliente.direccion,
-      ciudad: cliente.ciudad,
-      codigoPostal: cliente.codigoPostal,
+      RTN: cliente.RTN,
+      Género: cliente.Género,
       tipoCliente: cliente.tipoCliente,
       empresa: cliente.empresa || "",
       notas: cliente.notas || "",
@@ -174,7 +187,7 @@ export default function ClientesPage() {
     (cliente) =>
       cliente.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
       cliente.apellidos.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      cliente.email.toLowerCase().includes(searchTerm.toLowerCase()),
+      cliente.DNI.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
   const handleBack = () => {
@@ -187,21 +200,49 @@ export default function ClientesPage() {
       <header className="bg-card border-b border-border px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="sm" onClick={handleBack}>
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Volver al Dashboard
-            </Button>
             <div className="flex items-center space-x-2">
-              <User className="h-5 w-5 text-primary" />
-              <h1 className="text-lg font-semibold">Gestión de Clientes</h1>
+              <img
+                src="/logo2.png"
+                alt="Logo"
+                className="w-50"
+              />
             </div>
           </div>
-          <Button onClick={() => setShowForm(true)} disabled={showForm}>
+          <div className="flex items-center space-x-2">
+            <span className="text-sm text-muted-foreground hidden sm:block">Bienvenido, Usuario</span>
+            <Button variant="ghost" size="sm" onClick={handleLogout} className="logout-button">
+              <MdLogout className="h-4 w-4 mr-2" />
+              Salir
+            </Button>
+          </div>
+        </div>
+      </header>
+      <div className="max-w-7xl mx-auto pt-5">
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center space-x-4">
+            <Button variant="ghost" onClick={() => (window.location.href = "/dashboard")} className="regresar-btn">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Panel Principal
+            </Button>
+
+            <div>
+              <h1 className="text-2xl text-foreground titulo flex items-center space-x-2">
+                <User className="h-6 w-6 text-primary" />
+                <span>Gestión de Clientes</span>
+              </h1>
+              <p className="parrafo text-muted-foreground">
+                Administre y mantenga la información de sus clientes
+              </p>
+            </div>
+          </div>
+          <Button onClick={() => setShowForm(true)} disabled={showForm} className="nuevo-btn">
             <Plus className="h-4 w-4 mr-2" />
             Nuevo Cliente
           </Button>
         </div>
-      </header>
+      </div>
+
+
 
       <div className="p-6">
         <div className="max-w-7xl mx-auto">
@@ -219,7 +260,7 @@ export default function ClientesPage() {
 
           {/* Formulario de registro/edición */}
           {showForm && (
-            <Card className="mb-6">
+            <Card className="mb-6 card-principal">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
@@ -237,113 +278,142 @@ export default function ClientesPage() {
                       setFormData({
                         nombre: "",
                         apellidos: "",
-                        email: "",
+                        DNI: "",
                         telefono: "",
                         direccion: "",
-                        ciudad: "",
-                        codigoPostal: "",
+                        RTN: "",
+                        Género: "",
                         tipoCliente: "",
                         empresa: "",
                         notas: "",
                       })
                     }}
                   >
-                    <X className="h-4 w-4" />
+                    <MdCancel className="h-4 w-4" />
                   </Button>
                 </div>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-6">
-                  {/* Información personal */}
+                  {/* Nombre y Apellidos */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="nombre">Nombre *</Label>
-                      <Input
-                        id="nombre"
-                        value={formData.nombre}
-                        onChange={(e) => handleInputChange("nombre", e.target.value)}
-                        placeholder="Nombre del cliente"
-                        required
-                      />
+                      <Label htmlFor="nombre">Nombres *</Label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <Input
+                          id="nombre"
+                          value={formData.nombre}
+                          onChange={(e) => handleInputChange("nombre", e.target.value)}
+                          placeholder="Primer nombre del cliente"
+                          required
+                          className="card-content"
+                        />
+                        <Input
+                          id="nombre"
+                          value={formData.nombre}
+                          onChange={(e) => handleInputChange("nombre", e.target.value)}
+                          placeholder="Segundo nombre del cliente"
+                          className="card-content"
+                        />
+                      </div>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="apellidos">Apellidos *</Label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <Input
+                          id="apellidos"
+                          value={formData.apellidos}
+                          onChange={(e) => handleInputChange("apellidos", e.target.value)}
+                          placeholder="Primer apellido del cliente"
+                          required
+                          className="card-content"
+                        />
+                        <Input
+                          id="apellidos"
+                          value={formData.apellidos}
+                          onChange={(e) => handleInputChange("apellidos", e.target.value)}
+                          placeholder="Segundo apellido del cliente"
+                          required
+                          className="card-content"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* DNI y RTN */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="DNI">DNI *</Label>
                       <Input
-                        id="apellidos"
-                        value={formData.apellidos}
-                        onChange={(e) => handleInputChange("apellidos", e.target.value)}
-                        placeholder="Apellidos del cliente"
+                        id="DNI"
+                        value={formData.DNI}
+                        onChange={(e) => handleInputChange("DNI", e.target.value)}
+                        placeholder="Ejemplo: 0318-2000-12345"
                         required
+                        className="card-content"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="RTN">RTN (opcional)</Label>
+                      <Input
+                        id="RTN"
+                        value={formData.RTN}
+                        onChange={(e) => handleInputChange("RTN", e.target.value)}
+                        placeholder="Ejemplo: 0318-2000-123456"
+                        className="card-content"
                       />
                     </div>
                   </div>
 
-                  {/* Información de contacto */}
+                  {/* Teléfono y Dirección */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Email *</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        value={formData.email}
-                        onChange={(e) => handleInputChange("email", e.target.value)}
-                        placeholder="cliente@email.com"
-                        required
-                      />
-                    </div>
                     <div className="space-y-2">
                       <Label htmlFor="telefono">Teléfono *</Label>
                       <Input
                         id="telefono"
                         value={formData.telefono}
                         onChange={(e) => handleInputChange("telefono", e.target.value)}
-                        placeholder="+34 600 123 456"
+                        placeholder="Ejemplo: +504 9999-9999"
                         required
+                        className="card-content"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="direccion">Dirección *</Label>
+                      <Input
+                        id="direccion"
+                        value={formData.direccion}
+                        onChange={(e) => handleInputChange("direccion", e.target.value)}
+                        placeholder="Describa Aldea, caserillo, barrio o colonia"
+                        className="card-content"
                       />
                     </div>
                   </div>
 
-                  {/* Dirección */}
-                  <div className="space-y-2">
-                    <Label htmlFor="direccion">Dirección</Label>
-                    <Input
-                      id="direccion"
-                      value={formData.direccion}
-                      onChange={(e) => handleInputChange("direccion", e.target.value)}
-                      placeholder="Calle, número, piso..."
-                    />
-                  </div>
-
+                  {/* Género y Tipo de cliente */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="ciudad">Ciudad</Label>
-                      <Input
-                        id="ciudad"
-                        value={formData.ciudad}
-                        onChange={(e) => handleInputChange("ciudad", e.target.value)}
-                        placeholder="Ciudad"
-                      />
+                      <Label htmlFor="genero">Género *</Label>
+                      <Select
+                        value={formData.Género}
+                        onValueChange={(value) => handleInputChange("Género", value)}
+                      >
+                        <SelectTrigger className="card-content">
+                          <SelectValue placeholder="Seleccione el género" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="masculino">Masculino</SelectItem>
+                          <SelectItem value="femenino">Femenino</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="codigoPostal">Código Postal</Label>
-                      <Input
-                        id="codigoPostal"
-                        value={formData.codigoPostal}
-                        onChange={(e) => handleInputChange("codigoPostal", e.target.value)}
-                        placeholder="28001"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Tipo de cliente */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="tipoCliente">Tipo de Cliente</Label>
+                      <Label htmlFor="tipoCliente">Tipo de Cliente *</Label>
                       <Select
                         value={formData.tipoCliente}
                         onValueChange={(value) => handleInputChange("tipoCliente", value)}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className="card-content">
                           <SelectValue placeholder="Seleccione el tipo" />
                         </SelectTrigger>
                         <SelectContent>
@@ -353,18 +423,21 @@ export default function ClientesPage() {
                         </SelectContent>
                       </Select>
                     </div>
-                    {formData.tipoCliente === "empresa" && (
-                      <div className="space-y-2">
-                        <Label htmlFor="empresa">Nombre de la Empresa</Label>
-                        <Input
-                          id="empresa"
-                          value={formData.empresa}
-                          onChange={(e) => handleInputChange("empresa", e.target.value)}
-                          placeholder="Nombre de la empresa"
-                        />
-                      </div>
-                    )}
                   </div>
+
+                  {/* Empresa (si aplica) */}
+                  {formData.tipoCliente === "empresa" && (
+                    <div className="space-y-2">
+                      <Label htmlFor="empresa">Nombre de la Empresa</Label>
+                      <Input
+                        id="empresa"
+                        value={formData.empresa}
+                        onChange={(e) => handleInputChange("empresa", e.target.value)}
+                        placeholder="Nombre de la empresa"
+                        className="card-content"
+                      />
+                    </div>
+                  )}
 
                   {/* Notas */}
                   <div className="space-y-2">
@@ -375,12 +448,13 @@ export default function ClientesPage() {
                       onChange={(e) => handleInputChange("notas", e.target.value)}
                       placeholder="Información adicional sobre el cliente..."
                       rows={3}
+                      className="card-content"
                     />
                   </div>
 
                   {/* Botones */}
                   <div className="flex space-x-4">
-                    <Button type="submit" disabled={isLoading}>
+                    <Button type="submit" disabled={isLoading} className="nuevo-btn">
                       <Save className="h-4 w-4 mr-2" />
                       {isLoading ? "Guardando..." : editingClient ? "Actualizar Cliente" : "Registrar Cliente"}
                     </Button>
@@ -391,18 +465,22 @@ export default function ClientesPage() {
                         setShowForm(false)
                         setEditingClient(null)
                       }}
+                      className="regresar-btn"
                     >
                       Cancelar
                     </Button>
                   </div>
                 </form>
+
+                
               </CardContent>
             </Card>
           )}
+          
 
           {/* Lista de clientes */}
           {!showForm && (
-            <Card>
+            <Card className="card-principal">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
@@ -410,7 +488,7 @@ export default function ClientesPage() {
                     <CardDescription>Gestione y visualice todos los clientes registrados</CardDescription>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <div className="relative">
+                    <div className="relative card-content">
                       <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       <Input
                         placeholder="Buscar clientes..."
@@ -433,7 +511,7 @@ export default function ClientesPage() {
                     filteredClientes.map((cliente) => (
                       <div
                         key={cliente.id}
-                        className="border border-border rounded-lg p-4 hover:bg-muted/50 transition-colors"
+                        className="border border-border rounded-lg p-4 hover:bg-muted/50 transition-colors card-content"
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex-1">
@@ -448,16 +526,16 @@ export default function ClientesPage() {
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 text-sm text-muted-foreground">
                               <div className="flex items-center space-x-2">
                                 <Mail className="h-4 w-4" />
-                                <span>{cliente.email}</span>
+                                <span>{cliente.DNI}</span>
                               </div>
                               <div className="flex items-center space-x-2">
                                 <Phone className="h-4 w-4" />
                                 <span>{cliente.telefono}</span>
                               </div>
-                              {cliente.ciudad && (
+                              {cliente.RTN && (
                                 <div className="flex items-center space-x-2">
-                                  <MapPin className="h-4 w-4" />
-                                  <span>{cliente.ciudad}</span>
+                                  <IdCard  className="h-4 w-4" />
+                                  <span>{cliente.DNI}</span>
                                 </div>
                               )}
                               {cliente.empresa && (

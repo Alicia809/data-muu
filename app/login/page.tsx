@@ -1,8 +1,10 @@
 "use client"
 
-import type React from "react"
+import "./login.css" 
 
+import type React from "react"
 import { useState } from "react"
+
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -22,7 +24,6 @@ export default function LoginPage() {
     setIsLoading(true)
     setError("")
 
-    // Simulación de validación
     if (!email || !password) {
       setError("Por favor, complete todos los campos")
       setIsLoading(false)
@@ -35,12 +36,8 @@ export default function LoginPage() {
       return
     }
 
-    // Aquí conectarías con tu API
     try {
-      // Simulación de llamada a API
       await new Promise((resolve) => setTimeout(resolve, 1000))
-
-      // Redirigir al dashboard (esto lo manejarías con tu router)
       console.log("Login exitoso:", { email, password })
       window.location.href = "/dashboard"
     } catch (err) {
@@ -51,97 +48,104 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-4">
+    <div className="min-h-screen relative flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        {/* Logo y título */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-primary rounded-xl mb-4">
-            <MdBusiness className="w-8 h-8 text-primary-foreground" />
-          </div>
-          <h1 className="text-2xl font-bold text-foreground mb-2">Sistema de Registro</h1>
-          <p className="text-muted-foreground">Acceda a su cuenta para continuar</p>
-        </div>
-
-        <Card className="shadow-lg border-0">
-          <CardHeader className="space-y-1 pb-6">
-            <CardTitle className="text-xl font-semibold text-center">Iniciar Sesión</CardTitle>
-            <CardDescription className="text-center">Ingrese sus credenciales para acceder al sistema</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {error && (
-                <Alert variant="destructive">
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
-
-              <div className="space-y-2">
-                <Label htmlFor="email">Correo Electrónico</Label>
-                <div className="relative">
-                  <MdEmail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="usuario@empresa.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="pl-10"
-                    required
-                  />
-                </div>
+        {/* Imagen de fondo */}
+        <div className="login-background"></div>
+        <div className="login-overlay"></div>
+        {/* Contenido principal */}
+        <div className="w-full max-w-md relative z-10">
+          <Card className="shadow-lg border-0">
+            <CardHeader className="space-y-1 pb-6">
+              <div className="inline-flex items-center justify-center">
+                <img
+                  src="/logo1.png"
+                  alt="Logo"
+                  className="w-40"
+                />
               </div>
+              <CardTitle className="text-xl text-center titulo">Iniciar Sesión</CardTitle>
+              <CardDescription className="text-center parrafo">
+                Ingrese sus credenciales para acceder al sistema
+              </CardDescription>
+            </CardHeader>
 
-              <div className="space-y-2">
-                <Label htmlFor="password">Contraseña</Label>
-                <div className="relative">
-                  <MdLock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10 pr-10"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
-                  >
-                    {showPassword ? <MdVisibilityOff className="h-4 w-4" /> : <MdVisibility className="h-4 w-4" />}
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                {error && (
+                  <Alert variant="destructive">
+                    <AlertDescription className="parrafo">{error}</AlertDescription>
+                  </Alert>
+                )}
+
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="font-bold text-sm">
+                    Correo Electrónico
+                  </Label>
+                  <div className="relative">
+                    <MdEmail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="usuario@empresa.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="pl-10 parrafo"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="password" className="font-bold text-sm">
+                    Contraseña
+                  </Label>
+                  <div className="relative">
+                    <MdLock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="pl-10 pr-10 parrafo"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+                    >
+                      {showPassword ? <MdVisibilityOff className="h-4 w-4" /> : <MdVisibility className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <button type="button" className="text-sm text-primary hover:underline parrafo">
+                    ¿Olvidó su contraseña?
                   </button>
                 </div>
+
+                <Button type="submit" className="w-full parrafo custom-login-btn"  disabled={isLoading}>
+                  {isLoading ? "Iniciando sesión..." : "Iniciar Sesión"}
+                </Button>
+              </form>
+
+              <div className="mt-6 text-center">
+                <p className="text-sm text-muted-foreground parrafo">
+                  ¿Necesita acceso al sistema?{" "}
+                  <button className="text-primary hover:underline">Contacte al administrador</button>
+                </p>
               </div>
-
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <input id="remember" type="checkbox" className="rounded border-border" />
-                  <Label htmlFor="remember" className="text-sm text-muted-foreground">
-                    Recordarme
-                  </Label>
-                </div>
-                <button type="button" className="text-sm text-primary hover:underline">
-                  ¿Olvidó su contraseña?
-                </button>
-              </div>
-
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Iniciando sesión..." : "Iniciar Sesión"}
-              </Button>
-            </form>
-
-            <div className="mt-6 text-center">
-              <p className="text-sm text-muted-foreground">
-                ¿Necesita acceso al sistema?{" "}
-                <button className="text-primary hover:underline">Contacte al administrador</button>
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
 
         <div className="mt-8 text-center">
-          <p className="text-xs text-muted-foreground">© 2024 Sistema de Registro. Todos los derechos reservados.</p>
+          <p className="text-xs text-muted-foreground parrafo">
+            © 2025 Sistema DataMuu. Todos los derechos reservados.
+          </p>
         </div>
       </div>
     </div>

@@ -1,5 +1,9 @@
 "use client"
 
+
+import "./generacion-documentos.css"
+
+
 import type React from "react"
 
 import { useState } from "react"
@@ -13,6 +17,9 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { ArrowLeft, Plus, Search, FileText, Download, Printer, Eye, Calendar, User, Save, X } from "lucide-react"
+import {
+  MdLogout,
+} from "react-icons/md"
 
 interface Cliente {
   id: number
@@ -46,6 +53,12 @@ export default function DocumentosPage() {
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
   const [showPreview, setShowPreview] = useState(false)
+
+  const handleLogout = () => {
+    // Aquí conectarías con tu API de logout
+    console.log("Cerrando sesión...")
+    window.location.href = "/login"
+  }
 
   // Datos de ejemplo de clientes
   const clientes: Cliente[] = [
@@ -296,26 +309,51 @@ export default function DocumentosPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="documentos-page min-h-screen bg-background">
       {/* Header */}
       <header className="bg-card border-b border-border px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="sm" onClick={handleBack}>
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Volver al Dashboard
-            </Button>
             <div className="flex items-center space-x-2">
-              <FileText className="h-5 w-5 text-primary" />
-              <h1 className="text-lg font-semibold">Generación de Documentos</h1>
+              <img
+                src="/logo2.png"
+                alt="Logo"
+                className="w-50"
+              />
             </div>
           </div>
-          <Button onClick={() => setShowForm(true)} disabled={showForm}>
+          <div className="flex items-center space-x-2">
+            <span className="text-sm text-muted-foreground hidden sm:block">Bienvenido, Usuario</span>
+            <Button variant="ghost" size="sm" onClick={handleLogout} className="logout-button">
+              <MdLogout className="h-4 w-4 mr-2" />
+              Salir
+            </Button>
+          </div>
+        </div>
+      </header>      
+      <div className="max-w-7xl mx-auto pt-5">
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center space-x-4">
+            <Button variant="ghost" onClick={handleBack} className="regresar-btn">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Panel Principal
+            </Button>
+            <div>
+              <h1 className="text-2xl text-foreground titulo flex items-center space-x-2">
+                <FileText className="h-5 w-5 text-primary" />
+                <span>Generación de Cartas de Venta</span>
+              </h1>
+              <p className="parrafo text-muted-foreground">
+                Cree y gestione documentos personalizados para sus clientes
+              </p>
+            </div>
+          </div>
+          <Button onClick={() => setShowForm(true)} disabled={showForm} className="nuevo-btn">
             <Plus className="h-4 w-4 mr-2" />
             Nuevo Documento
           </Button>
         </div>
-      </header>
+      </div>
 
       <div className="p-6">
         <div className="max-w-7xl mx-auto">
@@ -333,7 +371,7 @@ export default function DocumentosPage() {
 
           {/* Formulario de generación de documento */}
           {showForm && (
-            <Card className="mb-6">
+            <Card className="mb-6 card-principal">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
@@ -365,7 +403,7 @@ export default function DocumentosPage() {
                         placeholder="Buscar cliente..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10"
+                        className="pl-10 card-content"
                       />
                     </div>
                     {searchTerm && (
@@ -417,8 +455,8 @@ export default function DocumentosPage() {
                   <div className="space-y-2">
                     <Label htmlFor="documentType">Tipo de Documento *</Label>
                     <Select value={documentType} onValueChange={setDocumentType}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Seleccione el tipo de documento" />
+                      <SelectTrigger className="card-content">
+                        <SelectValue placeholder="Seleccione el tipo de documento"/>
                       </SelectTrigger>
                       <SelectContent>
                         {tiposDocumento.map((tipo) => (
@@ -440,6 +478,7 @@ export default function DocumentosPage() {
                         onChange={(e) => handleInputChange("titulo", e.target.value)}
                         placeholder="Ej: Contrato de Servicios #001"
                         required
+                        className="card-content"
                       />
                     </div>
                     <div className="space-y-2">
@@ -448,7 +487,8 @@ export default function DocumentosPage() {
                         id="fecha"
                         type="date"
                         value={documentData.fecha}
-                        onChange={(e) => handleInputChange("fecha", e.target.value)}
+                        onChange={(e) => handleInputChange("fecha", e.target.value)} 
+                        className="card-content"
                       />
                     </div>
                   </div>
@@ -460,6 +500,7 @@ export default function DocumentosPage() {
                       value={documentData.concepto}
                       onChange={(e) => handleInputChange("concepto", e.target.value)}
                       placeholder="Descripción del servicio o producto"
+                      className="card-content"
                     />
                   </div>
 
@@ -484,16 +525,17 @@ export default function DocumentosPage() {
                       onChange={(e) => handleInputChange("observaciones", e.target.value)}
                       placeholder="Notas adicionales..."
                       rows={3}
+                      className="card-content"
                     />
                   </div>
 
                   {/* Botones */}
                   <div className="flex space-x-4">
-                    <Button type="submit" disabled={isLoading}>
+                    <Button type="submit" disabled={isLoading} className="nuevo-btn">
                       <Save className="h-4 w-4 mr-2" />
                       {isLoading ? "Generando..." : "Generar Documento"}
                     </Button>
-                    <Button type="button" variant="outline" onClick={handlePreview}>
+                    <Button type="button" variant="outline" onClick={handlePreview} className="vista-btn">
                       <Eye className="h-4 w-4 mr-2" />
                       Vista Previa
                     </Button>
@@ -505,6 +547,7 @@ export default function DocumentosPage() {
                         setSelectedClient(null)
                         setDocumentType("")
                       }}
+                      className="regresar-btn"
                     >
                       Cancelar
                     </Button>
@@ -573,7 +616,7 @@ export default function DocumentosPage() {
 
           {/* Lista de documentos generados */}
           {!showForm && (
-            <Card>
+            <Card className="card-principal">
               <CardHeader>
                 <CardTitle>Documentos Generados</CardTitle>
                 <CardDescription>Historial de documentos creados en el sistema</CardDescription>
@@ -589,7 +632,7 @@ export default function DocumentosPage() {
                     documentos.map((documento) => (
                       <div
                         key={documento.id}
-                        className="border border-border rounded-lg p-4 hover:bg-muted/50 transition-colors"
+                        className="border border-border rounded-lg p-4 hover:bg-muted/50 transition-colors card-content"
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex-1">

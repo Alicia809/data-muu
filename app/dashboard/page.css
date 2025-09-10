@@ -1,0 +1,116 @@
+/*--------BOTONES--------*/
+/* Estilo base del botón */
+.dashboard-btn {
+  background-color: #448f47;
+  color: white;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 10px;
+  transition: background-color 0.3s ease;
+}
+
+/* Efecto hover */
+.dashboard-btn:hover {
+  background-color: #4CAF50;
+  cursor: pointer;
+}
+
+/* Estado disabled */
+.dashboard-btn:disabled {
+  background-color: #9ca3af; /* Gris */
+  cursor: not-allowed;
+}
+
+/* Estilo base del botón */
+.dashboard-btn-1 {
+  background-color: #6d4c41da;
+  color: white; 
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 10px;
+  transition: background-color 0.3s ease;
+}
+
+/* Efecto hover */
+.dashboard-btn-1:hover {
+  background-color: #6D4C41;
+  cursor: pointer;
+}
+
+/* Estado disabled */
+.dashboard-btn-1:disabled {
+  background-color: #d7d7d7; /* Gris */
+  cursor: not-allowed;
+}
+
+/* Estilo base del botón */
+.logout-button {
+  background-color: #C62828;
+  color: white;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 10px;
+  transition: background-color 0.3s ease;
+}
+
+/* Efecto hover */
+.logout-button:hover {
+  background-color: #e52e2e;
+  cursor: pointer;
+  transform: translateY(-1px) scale(1.1);
+}
+
+/* Estado disabled */
+.logout-button:disabled {
+  background-color: #c628286e; /* Gris */
+  cursor: not-allowed;
+}
+
+/*--------CARDS--------*/
+/* Estilo base para todas las cards con efecto hover */
+.card-hover {
+  background-color: white; /* Fondo claro */
+  border-radius: 12px;     /* Bordes redondeados */
+  transition: transform 0.4s ease, box-shadow 0.4s ease;
+  cursor: pointer;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Sombra inicial suave */
+}
+
+/* Hover: efecto flotante */
+.card-hover:hover {
+  transform: translateY(-1px) scale(1.1); /* Levanta y agranda */
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15); /* Sombra más intensa */
+}
+
+/*--------BOTONES/SIDEBAR--------*/
+.sidebar {
+  background-color: #6d4c4109; /* Fondo gris claro */
+}
+
+/* Estilo base del botón */
+.boton-panel {
+  width: 100%;
+  justify-content: flex-start;
+  align-items: center;
+  font-weight: 500; /* font-medium */
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 0.375rem; /* rounded-md */
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+  transform: scale(1);
+}
+
+/* Hover con color amarillo suave y efecto de resalte */
+.boton-panel:hover {
+  background-color: #6d4c41da; /* Amarillo suave */
+  color: #ffffff; /* Texto negro en hover */
+  box-shadow: 0 0 15px #6d4c41ac; /* Brillo amarillo */
+  transform: scale(1.05); /* Crece un poquito */
+}
+
+
+/*--------ICONOS/TARJETAS--------*/
+.icono-dashboard {
+  color: #6D4C41;
+}

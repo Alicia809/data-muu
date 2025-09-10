@@ -3,8 +3,8 @@ import type { Metadata } from "next"
 import "./globals.css"
 
 export const metadata: Metadata = {
-  title: "Sistema de Registro",
-  description: "Sistema de registro de clientes y documentos",
+  title: "DataMuu",
+  description: "Sistema de registro de clientes, semovientes, fierros y cartas de venta",
     generator: 'v0.app'
 }
 

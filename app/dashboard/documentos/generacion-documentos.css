@@ -1,0 +1,106 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600&family=Roboto:wght@400&display=swap');
+
+.titulo {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+}
+
+.parrafo {
+  font-family: 'Roboto', sans-serif;
+  font-weight: 400;
+}
+
+/*-----BOTONES-----*/
+
+.nuevo-btn{
+  background-color: #4caf4fea;
+  align-items: center;
+  font-weight: 500; /* font-medium */
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 0.375rem; /* rounded-md */
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+  transform: scale(1);
+}
+
+/* Hover con color amarillo suave y efecto de resalte */
+.nuevo-btn:hover {
+  background-color: #4CAF50; /* Amarillo suave */
+  color: #ffffff; /* Texto negro en hover */
+  box-shadow: 0 0 15px #4caf4f5f; /* Brillo amarillo */
+  transform: scale(1.05); /* Crece un poquito */
+}
+
+.regresar-btn{
+  background-color: #6d4c41da;
+  color: #ffffff;
+  align-items: center;
+  font-weight: 500; /* font-medium */
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 0.375rem; /* rounded-md */
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+  transform: scale(1);
+}
+
+/* Hover con color amarillo suave y efecto de resalte */
+.regresar-btn:hover {
+  background-color: #6D4C41; /* Amarillo suave */
+  color: #ffffff; /* Texto negro en hover */
+  box-shadow: 0 0 15px #6d4c4149; /* Brillo amarillo */
+  transform: scale(1.05); /* Crece un poquito */
+}
+
+.vista-btn{
+  background-color: #fbc12daf;
+  color: #212121;
+  align-items: center;
+  font-weight: 500; /* font-medium */
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 0.375rem; /* rounded-md */
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+  transform: scale(1);
+}
+
+/* Hover con color amarillo suave y efecto de resalte */
+.vista-btn:hover {
+  background-color: #FBC02D; /* Amarillo suave */
+  color: #212121; /* Texto negro en hover */
+  box-shadow: 0 0 15px #FBC02D49; /* Brillo amarillo */
+  transform: scale(1.05); /* Crece un poquito */
+}
+
+/* Estilo base del botón */
+.logout-button {
+  background-color: #C62828;
+  color: white;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 10px;
+  transition: background-color 0.3s ease;
+}
+
+/* Efecto hover */
+.logout-button:hover {
+  background-color: #e52e2e;
+  cursor: pointer;
+  transform: translateY(-1px) scale(1.1);
+}
+
+/* Estado disabled */
+.logout-button:disabled {
+  background-color: #c628286e; /* Gris */
+  cursor: not-allowed;
+}
+
+.card-principal {
+  background-color: #6d4c4109; /* Fondo gris claro */
+}
+
+.card-content {
+  background-color: #ffffff9c; /* Fondo gris claro */
+}
