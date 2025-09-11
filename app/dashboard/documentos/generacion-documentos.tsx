@@ -20,6 +20,8 @@ import { ArrowLeft, Plus, Search, FileText, Download, Printer, Eye, Calendar, Us
 import {
   MdLogout,
 } from "react-icons/md"
+import { supabase } from "@/lib/supabaseClient"
+import { useRouter } from "next/navigation"
 
 interface Cliente {
   id: number
@@ -54,10 +56,13 @@ export default function DocumentosPage() {
   const [success, setSuccess] = useState("")
   const [showPreview, setShowPreview] = useState(false)
 
-  const handleLogout = () => {
-    // Aquí conectarías con tu API de logout
-    console.log("Cerrando sesión...")
-    window.location.href = "/login"
+  const router = useRouter()
+
+  const handleLogout = async () => {
+    // Cerrar sesión en Supabase
+    await supabase.auth.signOut()
+    // Redirigir a login
+    router.push("/login")
   }
 
   // Datos de ejemplo de clientes

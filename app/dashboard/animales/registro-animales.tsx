@@ -24,9 +24,9 @@ import {
 import {
   MdLogout,
 } from "react-icons/md"
-
-
 import { PiCowDuotone } from "react-icons/pi"
+import { supabase } from "@/lib/supabaseClient"
+import { useRouter } from "next/navigation"
 
 export default function AnimalesPage() {
   const [showForm, setShowForm] = useState(false)
@@ -54,10 +54,13 @@ export default function AnimalesPage() {
   })
 
 
-  const handleLogout = () => {
-    // Aquí conectarías con tu API de logout
-    console.log("Cerrando sesión...")
-    window.location.href = "/login"
+  const router = useRouter()
+
+  const handleLogout = async () => {
+    // Cerrar sesión en Supabase
+    await supabase.auth.signOut()
+    // Redirigir a login
+    router.push("/login")
   }
 
   const [animales, setAnimales] = useState([

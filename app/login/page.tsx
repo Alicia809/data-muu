@@ -4,6 +4,8 @@ import "./login.css"
 
 import type React from "react"
 import { useState } from "react"
+import { supabase } from '@/lib/supabaseClient'
+import { useRouter } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -13,6 +15,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { MdVisibility, MdVisibilityOff, MdLock, MdEmail, MdBusiness } from "react-icons/md"
 
 export default function LoginPage() {
+  const router = useRouter()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -37,10 +40,19 @@ export default function LoginPage() {
     }
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-      console.log("Login exitoso:", { email, password })
-      window.location.href = "/dashboard"
+      const { data, error: loginError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+
+      if (loginError) {
+        setError("Error al iniciar sesión: Credenciales inválidas")
+      } else {
+        // Usuario autenticado correctamente
+        router.push("/dashboard") // Redirige al dashboard
+      }
     } catch (err) {
+      console.error(err)
       setError("Error al iniciar sesión. Verifique sus credenciales.")
     } finally {
       setIsLoading(false)

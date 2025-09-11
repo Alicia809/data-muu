@@ -15,14 +15,20 @@ import {
 } from "react-icons/md"
 import { PiCowDuotone } from "react-icons/pi"
 import { TbHorseshoe } from "react-icons/tb"
+// Importamos Supabase y useRouter
+import { supabase } from "@/lib/supabaseClient"
+import { useRouter } from "next/navigation"
 
 export default function DashboardPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
-  const handleLogout = () => {
-    // Aquí conectarías con tu API de logout
-    console.log("Cerrando sesión...")
-    window.location.href = "/login"
+  const router = useRouter()
+
+  const handleLogout = async () => {
+    // Cerrar sesión en Supabase
+    await supabase.auth.signOut()
+    // Redirigir a login
+    router.push("/login")
   }
 
   const navigateToClients = () => {

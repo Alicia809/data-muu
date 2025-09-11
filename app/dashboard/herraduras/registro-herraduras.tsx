@@ -17,6 +17,8 @@ import {
   MdLogout,
 } from "react-icons/md"
 import { TbHorseshoe } from "react-icons/tb"
+import { supabase } from "@/lib/supabaseClient"
+import { useRouter } from "next/navigation"
 
 export default function HerradurasPage() {
   const [showForm, setShowForm] = useState(false)
@@ -30,10 +32,14 @@ export default function HerradurasPage() {
     imagen: null,
   })
 
-  const handleLogout = () => {
-    // Aquí conectarías con tu API de logout
-    console.log("Cerrando sesión...")
-    window.location.href = "/login"
+
+  const router = useRouter()
+
+  const handleLogout = async () => {
+    // Cerrar sesión en Supabase
+    await supabase.auth.signOut()
+    // Redirigir a login
+    router.push("/login")
   }
 
   // Datos de ejemplo
