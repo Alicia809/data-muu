@@ -79,7 +79,7 @@ export default function DashboardPage() {
         <aside
           className={`${
             sidebarOpen ? "translate-x-0" : "-translate-x-full"
-          } fixed inset-y-0 left-0 z-50 w-64 bg-card border-r border-border transition-transform duration-300 ease-in-out md:translate-x-0 md:static md:inset-0 sidebar`}
+          } fixed inset-y-0 left-0 z-40 w-64 bg-white border-r border-gray-200 transition-transform duration-300 ease-in-out md:translate-x-0 md:static md:inset-0 sidebar`}
         >
           <div className="flex flex-col h-full pt-2 relative"> {/* pt-20 para separar del top */}
             <nav className="flex-1 px-4 py-6 space-y-2">
@@ -131,7 +131,10 @@ export default function DashboardPage() {
 
         {/* Overlay para móvil */}
         {sidebarOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden" onClick={() => setSidebarOpen(false)} />
+          <div
+            className="fixed inset-0 bg-white z-30 md:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
         )}
 
         {/* Contenido principal */}

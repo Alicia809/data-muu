@@ -3,35 +3,32 @@
 import "./registro-clientes.css"
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Plus, Search, Edit, Trash2, User, Mail, Phone, IdCard , Building2, Save, X } from "lucide-react"
-import {
-  MdLogout, MdCancel
-} from "react-icons/md"
+import { ArrowLeft, Plus, Search, User, Save } from "lucide-react"
+import { MdLogout, MdCancel } from "react-icons/md"
+import { FaRegIdCard, FaPhoneAlt, FaHome, FaEdit, FaTrash } from "react-icons/fa"
 import { supabase } from "@/lib/supabaseClient"
 import { useRouter } from "next/navigation"
 
+
 interface Cliente {
   id: number
-  nombre: string
-  apellidos: string
-  DNI: string
+  nombre1: string
+  nombre2: string
+  apellido1: string
+  apellido2: string
+  dni: string
+  rtn: string
   telefono: string
   direccion: string
-  RTN: string
-  Género: string
-  tipoCliente: string
-  empresa?: string
-  notas?: string
-  fechaRegistro: string
+  genero: string
 }
 
 export default function ClientesPage() {
@@ -45,155 +42,180 @@ export default function ClientesPage() {
   const router = useRouter()
 
   const handleLogout = async () => {
-    // Cerrar sesión en Supabase
     await supabase.auth.signOut()
-    // Redirigir a login
     router.push("/login")
   }
 
+  useEffect(() => {
+    fetchClientes();
+  }, []);
+
+  const fetchClientes = async () => {
+    setIsLoading(true);
+    setError("");
+    try {
+      const res = await fetch("/api/clientes");
+      const data = await res.json();
+
+      if (Array.isArray(data)) {
+        // Mapear campos de Supabase a tu interfaz Cliente
+        const mapped = data.map((c: any) => ({
+          id: c.id,
+          nombre1: c.p_nombre,
+          nombre2: c.s_nombre,
+          apellido1: c.p_apellido,
+          apellido2: c.s_apellido,
+          dni: c.dni,
+          rtn: c.rtn,
+          telefono: c.telefono_1,
+          direccion: c.domicilio,
+          genero: c.genero
+        }));
+        setClientes(mapped);
+      } else {
+        setClientes([]);
+        console.warn("La API no devolvió un array:", data);
+      }
+
+    } catch (err) {
+      setError("Error al cargar los contribuyentes");
+      setClientes([]);
+      setTimeout(() => setError(""), 10000);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+
+
+
   // Estado del formulario
   const [formData, setFormData] = useState({
-    nombre: "",
-    apellidos: "",
-    DNI: "",
+    nombre1: "",
+    nombre2: "",
+    apellido1: "",
+    apellido2: "",
+    dni: "",
+    rtn: "",
     telefono: "",
     direccion: "",
-    RTN: "",
-    Género: "",
-    tipoCliente: "",
-    empresa: "",
-    notas: "",
+    genero: "",
   })
 
-  // Datos de ejemplo (en producción vendrían de tu API)
-  const [clientes, setClientes] = useState<Cliente[]>([
-    {
-      id: 1,
-      nombre: "Juan",
-      apellidos: "Pérez García",
-      DNI: "0318-2000-54321",
-      telefono: "+504 9990-0000",
-      direccion: "Calle Mayor 123",
-      RTN: "0318-2000-543211",
-      Género: "Masculino",
-      tipoCliente: "particular",
-      notas: "Cliente preferente",
-      fechaRegistro: "2024-01-15",
-    },
-    {
-      id: 2,
-      nombre: "María",
-      apellidos: "González López",
-      DNI: "0318-1990-00000",
-      telefono: "+504 9999-0000",
-      direccion: "Avenida Principal 456",
-      RTN: "0318-2000-543212",
-      Género: "Femenino",
-      tipoCliente: "empresa",
-      empresa: "Empresa ABC S.L.",
-      fechaRegistro: "2024-01-20",
-    },
-  ])
+  // Datos de ejemplo
+  const [clientes, setClientes] = useState<Cliente[]>([]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError("")
-    setSuccess("")
+    e.preventDefault();
+    setIsLoading(true);
+    setError("");
+    setSuccess("");
 
-    // Validación básica
-    if (!formData.nombre || !formData.apellidos || !formData.DNI || !formData.telefono) {
-      setError("Por favor, complete todos los campos obligatorios")
-      setIsLoading(false)
-      return
+    // Validaciones (igual que antes)
+    if (!formData.nombre1 || !formData.apellido1 || !formData.dni || !formData.telefono) {
+      setError("Por favor, complete todos los campos obligatorios");
+      setIsLoading(false);
+      return;
+    }
+
+    if (!formData.genero) {
+      setError("Por favor, seleccione un género");
+      setIsLoading(false);
+      return;
     }
 
     const dniRegex = /^\d{4}-\d{4}-\d{5}$/;
-
-    if (!dniRegex.test(formData.DNI)) {
+    if (!dniRegex.test(formData.dni)) {
       setError("Por favor, ingrese un DNI válido en el formato 0000-0000-00000");
       setIsLoading(false);
       return;
     }
 
-
     try {
-      // Simulación de llamada a API
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
+      let res;
       if (editingClient) {
-        // Actualizar cliente existente
-        setClientes((prev) =>
-          prev.map((cliente) => (cliente.id === editingClient.id ? { ...cliente, ...formData } : cliente)),
-        )
-        setSuccess("Cliente actualizado correctamente")
+        res = await fetch("/api/clientes", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: editingClient.id, ...formData }),
+        });
+        setSuccess("Cliente actualizado correctamente");
+        // Limpiar la alerta de éxito después de 10 segundos
+        setTimeout(() => setSuccess(""), 10000);
       } else {
-        // Crear nuevo cliente
-        const nuevoCliente: Cliente = {
-          id: Date.now(),
-          ...formData,
-          fechaRegistro: new Date().toISOString().split("T")[0],
-        }
-        setClientes((prev) => [nuevoCliente, ...prev])
-        setSuccess("Cliente registrado correctamente")
+        res = await fetch("/api/clientes", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
+        });
+        setSuccess("Cliente registrado correctamente");
+        // Limpiar la alerta de éxito después de 10 segundos
+        setTimeout(() => setSuccess(""), 10000);
       }
 
-      // Limpiar formulario
+      await res.json();
+      fetchClientes(); // recarga lista desde la API
       setFormData({
-        nombre: "",
-        apellidos: "",
-        DNI: "",
+        nombre1: "",
+        nombre2: "",
+        apellido1: "",
+        apellido2: "",
+        dni: "",
+        rtn: "",
         telefono: "",
         direccion: "",
-        RTN: "",
-        Género: "",
-        tipoCliente: "",
-        empresa: "",
-        notas: "",
-      })
-      setShowForm(false)
-      setEditingClient(null)
+        genero: "",
+      });
+      setShowForm(false);
+      setEditingClient(null);
     } catch (err) {
-      setError("Error al guardar el cliente. Inténtelo de nuevo.")
+      setError("Error al guardar el cliente. Inténtelo de nuevo.");
+      // Limpiar el error después de 10 segundos (10000 ms)
+      setTimeout(() => {
+        setError("");
+      }, 10000);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
+
 
   const handleEdit = (cliente: Cliente) => {
-    setFormData({
-      nombre: cliente.nombre,
-      apellidos: cliente.apellidos,
-      DNI: cliente.DNI,
-      telefono: cliente.telefono,
-      direccion: cliente.direccion,
-      RTN: cliente.RTN,
-      Género: cliente.Género,
-      tipoCliente: cliente.tipoCliente,
-      empresa: cliente.empresa || "",
-      notas: cliente.notas || "",
-    })
+    setFormData({ ...cliente })
     setEditingClient(cliente)
     setShowForm(true)
   }
 
   const handleDelete = async (id: number) => {
     if (confirm("¿Está seguro de que desea eliminar este cliente?")) {
-      setClientes((prev) => prev.filter((cliente) => cliente.id !== id))
-      setSuccess("Cliente eliminado correctamente")
+      try {
+        await fetch(`/api/clientes?id=${id}`, { method: "DELETE" });
+        setSuccess("Cliente eliminado correctamente");
+        // Limpiar la alerta de éxito después de 10 segundos
+        setTimeout(() => setSuccess(""), 10000);
+        fetchClientes(); // recarga lista desde la API
+      } catch {
+        setError("Error al eliminar cliente");
+        // Limpiar el error después de 10 segundos (10000 ms)
+        setTimeout(() => {
+          setError("");
+        }, 10000);
+      }
     }
-  }
+  };
 
-  const filteredClientes = clientes.filter(
-    (cliente) =>
-      cliente.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      cliente.apellidos.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      cliente.DNI.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
+
+  const filteredClientes = clientes.filter((cliente) =>
+    (cliente.nombre1?.toLowerCase() ?? '').includes(searchTerm.toLowerCase()) ||
+    (cliente.nombre2?.toLowerCase() ?? '').includes(searchTerm.toLowerCase()) ||
+    (cliente.apellido1?.toLowerCase() ?? '').includes(searchTerm.toLowerCase()) ||
+    (cliente.apellido2?.toLowerCase() ?? '').includes(searchTerm.toLowerCase())
+  );
+
 
   const handleBack = () => {
     window.location.href = "/dashboard"
@@ -233,21 +255,19 @@ export default function ClientesPage() {
             <div>
               <h1 className="text-2xl text-foreground titulo flex items-center space-x-2">
                 <User className="h-6 w-6 text-primary" />
-                <span>Gestión de Clientes</span>
+                <span>Gestión de Contribuyentes</span>
               </h1>
               <p className="parrafo text-muted-foreground">
-                Administre y mantenga la información de sus clientes
+                Administre y mantenga la información de sus contribuyentes
               </p>
             </div>
           </div>
           <Button onClick={() => setShowForm(true)} disabled={showForm} className="nuevo-btn">
             <Plus className="h-4 w-4 mr-2" />
-            Nuevo Cliente
+            Nuevo Contribuyente
           </Button>
         </div>
       </div>
-
-
 
       <div className="p-6">
         <div className="max-w-7xl mx-auto">
@@ -262,313 +282,264 @@ export default function ClientesPage() {
               <AlertDescription>{success}</AlertDescription>
             </Alert>
           )}
+        </div>
+      </div>
 
-          {/* Formulario de registro/edición */}
-          {showForm && (
-            <Card className="mb-6 card-principal">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>{editingClient ? "Editar Cliente" : "Registrar Nuevo Cliente"}</CardTitle>
-                    <CardDescription>
-                      {editingClient ? "Modifique los datos del cliente" : "Complete la información del cliente"}
-                    </CardDescription>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setShowForm(false)
-                      setEditingClient(null)
-                      setFormData({
-                        nombre: "",
-                        apellidos: "",
-                        DNI: "",
-                        telefono: "",
-                        direccion: "",
-                        RTN: "",
-                        Género: "",
-                        tipoCliente: "",
-                        empresa: "",
-                        notas: "",
-                      })
-                    }}
-                  >
-                    <MdCancel className="h-4 w-4" />
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  {/* Nombre y Apellidos */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="nombre">Nombres *</Label>
-                      <div className="grid grid-cols-2 gap-2">
-                        <Input
-                          id="nombre"
-                          value={formData.nombre}
-                          onChange={(e) => handleInputChange("nombre", e.target.value)}
-                          placeholder="Primer nombre del cliente"
-                          required
-                          className="card-content"
-                        />
-                        <Input
-                          id="nombre"
-                          value={formData.nombre}
-                          onChange={(e) => handleInputChange("nombre", e.target.value)}
-                          placeholder="Segundo nombre del cliente"
-                          className="card-content"
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="apellidos">Apellidos *</Label>
-                      <div className="grid grid-cols-2 gap-2">
-                        <Input
-                          id="apellidos"
-                          value={formData.apellidos}
-                          onChange={(e) => handleInputChange("apellidos", e.target.value)}
-                          placeholder="Primer apellido del cliente"
-                          required
-                          className="card-content"
-                        />
-                        <Input
-                          id="apellidos"
-                          value={formData.apellidos}
-                          onChange={(e) => handleInputChange("apellidos", e.target.value)}
-                          placeholder="Segundo apellido del cliente"
-                          required
-                          className="card-content"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* DNI y RTN */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="DNI">DNI *</Label>
-                      <Input
-                        id="DNI"
-                        value={formData.DNI}
-                        onChange={(e) => handleInputChange("DNI", e.target.value)}
-                        placeholder="Ejemplo: 0318-2000-12345"
-                        required
-                        className="card-content"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="RTN">RTN (opcional)</Label>
-                      <Input
-                        id="RTN"
-                        value={formData.RTN}
-                        onChange={(e) => handleInputChange("RTN", e.target.value)}
-                        placeholder="Ejemplo: 0318-2000-123456"
-                        className="card-content"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Teléfono y Dirección */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="telefono">Teléfono *</Label>
-                      <Input
-                        id="telefono"
-                        value={formData.telefono}
-                        onChange={(e) => handleInputChange("telefono", e.target.value)}
-                        placeholder="Ejemplo: +504 9999-9999"
-                        required
-                        className="card-content"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="direccion">Dirección *</Label>
-                      <Input
-                        id="direccion"
-                        value={formData.direccion}
-                        onChange={(e) => handleInputChange("direccion", e.target.value)}
-                        placeholder="Describa Aldea, caserillo, barrio o colonia"
-                        className="card-content"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Género y Tipo de cliente */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="genero">Género *</Label>
-                      <Select
-                        value={formData.Género}
-                        onValueChange={(value) => handleInputChange("Género", value)}
-                      >
-                        <SelectTrigger className="card-content">
-                          <SelectValue placeholder="Seleccione el género" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="masculino">Masculino</SelectItem>
-                          <SelectItem value="femenino">Femenino</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="tipoCliente">Tipo de Cliente *</Label>
-                      <Select
-                        value={formData.tipoCliente}
-                        onValueChange={(value) => handleInputChange("tipoCliente", value)}
-                      >
-                        <SelectTrigger className="card-content">
-                          <SelectValue placeholder="Seleccione el tipo" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="particular">Particular</SelectItem>
-                          <SelectItem value="empresa">Empresa</SelectItem>
-                          <SelectItem value="autonomo">Autónomo</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  {/* Empresa (si aplica) */}
-                  {formData.tipoCliente === "empresa" && (
-                    <div className="space-y-2">
-                      <Label htmlFor="empresa">Nombre de la Empresa</Label>
-                      <Input
-                        id="empresa"
-                        value={formData.empresa}
-                        onChange={(e) => handleInputChange("empresa", e.target.value)}
-                        placeholder="Nombre de la empresa"
-                        className="card-content"
-                      />
-                    </div>
-                  )}
-
-                  {/* Notas */}
-                  <div className="space-y-2">
-                    <Label htmlFor="notas">Notas adicionales</Label>
-                    <Textarea
-                      id="notas"
-                      value={formData.notas}
-                      onChange={(e) => handleInputChange("notas", e.target.value)}
-                      placeholder="Información adicional sobre el cliente..."
-                      rows={3}
+      {/* Formulario de registro/edición */}
+      {showForm && (
+        <Card className="mb-6 card-principal max-w-7xl mx-auto p-6">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>{editingClient ? "Editar Contribuyente" : "Registrar Nuevo Contribuyente"}</CardTitle>
+                <CardDescription>
+                  {editingClient
+                    ? "Modifique los datos del Contribuyente"
+                    : "Complete la información del Contribuyente"}
+                </CardDescription>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setShowForm(false)
+                  setEditingClient(null)
+                  setFormData({
+                    nombre1: "",
+                    nombre2: "",
+                    apellido1: "",
+                    apellido2: "",
+                    dni: "",
+                    rtn: "",
+                    telefono: "",
+                    direccion: "",
+                    genero: "",
+                  })
+                }}
+              >
+                <MdCancel className="h-4 w-4" />
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-6 w-full max-w-7xl mx-auto">
+              {/* Nombre y Apellido */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="nombre">Nombre *</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Input
+                      id="nombre1"
+                      value={formData.nombre1}
+                      onChange={(e) => handleInputChange("nombre1", e.target.value)}
+                      placeholder="Primer nombre"
+                      required
+                      className="card-content"
+                    />
+                    <Input
+                      id="nombre2"
+                      value={formData.nombre2}
+                      onChange={(e) => handleInputChange("nombre2", e.target.value)}
+                      placeholder="Segundo nombre"
                       className="card-content"
                     />
                   </div>
-
-                  {/* Botones */}
-                  <div className="flex space-x-4">
-                    <Button type="submit" disabled={isLoading} className="nuevo-btn">
-                      <Save className="h-4 w-4 mr-2" />
-                      {isLoading ? "Guardando..." : editingClient ? "Actualizar Cliente" : "Registrar Cliente"}
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => {
-                        setShowForm(false)
-                        setEditingClient(null)
-                      }}
-                      className="regresar-btn"
-                    >
-                      Cancelar
-                    </Button>
-                  </div>
-                </form>
-
-                
-              </CardContent>
-            </Card>
-          )}
-          
-
-          {/* Lista de clientes */}
-          {!showForm && (
-            <Card className="card-principal">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>Lista de Clientes</CardTitle>
-                    <CardDescription>Gestione y visualice todos los clientes registrados</CardDescription>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="relative card-content">
-                      <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        placeholder="Buscar clientes..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10 w-64"
-                      />
-                    </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="apellido">Apellido *</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                   <Input
+                      id="apellido1"
+                      value={formData.apellido1}
+                      onChange={(e) => handleInputChange("apellido1", e.target.value)}
+                      placeholder="Primer apellido"
+                      required
+                      className="card-content"
+                    />
+                    <Input
+                      id="apellido2"
+                      value={formData.apellido2}
+                      onChange={(e) => handleInputChange("apellido2", e.target.value)}
+                      placeholder="Segundo apellido"
+                      required
+                      className="card-content"
+                    />
                   </div>
                 </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {filteredClientes.length === 0 ? (
-                    <div className="text-center py-8">
-                      <User className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                      <p className="text-muted-foreground">No se encontraron clientes</p>
-                    </div>
-                  ) : (
-                    filteredClientes.map((cliente) => (
-                      <div
-                        key={cliente.id}
-                        className="border border-border rounded-lg p-4 hover:bg-muted/50 transition-colors card-content"
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-3 mb-2">
-                              <h3 className="font-semibold text-lg">
-                                {cliente.nombre} {cliente.apellidos}
-                              </h3>
-                              <Badge variant={cliente.tipoCliente === "empresa" ? "default" : "secondary"}>
-                                {cliente.tipoCliente}
-                              </Badge>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 text-sm text-muted-foreground">
-                              <div className="flex items-center space-x-2">
-                                <Mail className="h-4 w-4" />
-                                <span>{cliente.DNI}</span>
-                              </div>
-                              <div className="flex items-center space-x-2">
-                                <Phone className="h-4 w-4" />
-                                <span>{cliente.telefono}</span>
-                              </div>
-                              {cliente.RTN && (
-                                <div className="flex items-center space-x-2">
-                                  <IdCard  className="h-4 w-4" />
-                                  <span>{cliente.DNI}</span>
-                                </div>
-                              )}
-                              {cliente.empresa && (
-                                <div className="flex items-center space-x-2">
-                                  <Building2 className="h-4 w-4" />
-                                  <span>{cliente.empresa}</span>
-                                </div>
-                              )}
-                            </div>
+              </div>
+
+              {/* DNI y RTN */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="DNI">DNI *</Label>
+                  <Input
+                    id="DNI"
+                    value={formData.dni}
+                    onChange={(e) => handleInputChange("dni", e.target.value)}
+                    placeholder="Ejemplo: 0318-2000-12345"
+                    required
+                    className="card-content"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="RTN">RTN</Label>
+                  <Input
+                    id="RTN"
+                    value={formData.rtn}
+                    onChange={(e) => handleInputChange("rtn", e.target.value)}
+                    placeholder="Ejemplo: 0318-2000-123456"
+                    className="card-content"
+                  />
+                </div>
+              </div>
+
+              {/* Teléfono y Genero */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="telefono">Teléfono *</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Input
+                      id="telefono"
+                      value={formData.telefono}
+                      onChange={(e) => handleInputChange("telefono", e.target.value)}
+                      placeholder="Ejemplo: +504 9999-9999"
+                      required
+                      className="card-content"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="genero">Género *</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                   <Select
+                      value={formData.genero}
+                      onValueChange={(value) => handleInputChange("genero", value)}
+                    >
+                      <SelectTrigger className="card-content">
+                        <SelectValue placeholder="Seleccione el género" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="masculino">Masculino</SelectItem>
+                        <SelectItem value="femenino">Femenino</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Direccion */} 
+                           
+              <div className="space-y-2">
+                <Label htmlFor="direccion">Dirección *</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <textarea
+                    id="direccion"
+                    value={formData.direccion}
+                    onChange={(e) => handleInputChange("direccion", e.target.value)}
+                    placeholder="Describa Aldea, caserío, barrio o colonia"
+                    className="card-content w-full border border-border rounded-md focus:ring-2 focus:ring-primary focus:border-primary"
+                    rows={3}
+                    required
+                  />
+                </div>               
+              </div>
+
+              {/* Botones */}
+              <div className="flex space-x-4">
+                <Button type="submit" disabled={isLoading} className="nuevo-btn">
+                  <Save className="h-4 w-4 mr-2" />
+                  {isLoading ? "Guardando..." : editingClient ? "Actualizar Contribuyente" : "Registrar Contribuyente"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setShowForm(false)
+                    setEditingClient(null)
+                  }}
+                  className="regresar-btn"
+                >
+                  Cancelar
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Lista de Contribuyentes */}
+      {!showForm && (
+        <Card className="mb-6 card-principal max-w-7xl mx-auto p-6">
+          <CardHeader>
+            <div className="flex items-center justify-between space-y-6 w-full max-w-7xl mx-auto">
+              <div>
+                <CardTitle>Lista de Contribuyentes</CardTitle>
+                <CardDescription>Gestione y visualice todos los contribuyentes registrados</CardDescription>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="relative card-content">
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar contribuyentes..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 w-64"
+                  />
+                </div>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {filteredClientes.length === 0 ? (
+                <div className="text-center py-8">
+                  <User className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground">No se encontraron contribuyentes</p>
+                </div>
+              ) : (
+                filteredClientes.map((cliente) => (
+                  <div
+                    key={cliente.id}
+                    className="border border-border rounded-lg p-4 hover:bg-muted/50 transition-colors card-content"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-3 mb-2">
+                          <h3 className="font-semibold text-lg parrafo">
+                            {cliente.nombre1} {cliente.nombre2} {cliente.apellido1} {cliente.apellido2}
+                          </h3>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 text-sm text-muted-foreground">
+                          <div className="flex items-center space-x-2 parrafo">
+                            <FaRegIdCard className="h-4 w-4" />
+                            <span>{cliente.dni}</span>
                           </div>
-                          <div className="flex items-center space-x-2">
-                            <Button variant="ghost" size="sm" onClick={() => handleEdit(cliente)}>
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm" onClick={() => handleDelete(cliente.id)}>
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
+                          <div className="flex items-center space-x-2 parrafo">
+                            <FaPhoneAlt className="h-4 w-4" />
+                            <span>{cliente.telefono}</span>
+                          </div>
+                          <div className="flex items-center space-x-2 parrafo col-span-1 md:col-span-2">
+                            <FaHome className="h-4 w-4" />
+                            <span>{cliente.direccion}</span>
                           </div>
                         </div>
                       </div>
-                    ))
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      </div>
+                      <div className="flex items-center space-x-2">
+                        <Button variant="ghost" size="sm" onClick={() => handleEdit(cliente)}>
+                          <FaEdit className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => handleDelete(cliente.id)}>
+                          <FaTrash className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }

@@ -133,12 +133,6 @@ export default function LoginPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <button type="button" className="text-sm text-primary hover:underline parrafo">
-                    ¿Olvidó su contraseña?
-                  </button>
-                </div>
-
                 <Button type="submit" className="w-full parrafo custom-login-btn"  disabled={isLoading}>
                   {isLoading ? "Iniciando sesión..." : "Iniciar Sesión"}
                 </Button>
@@ -146,8 +140,8 @@ export default function LoginPage() {
 
               <div className="mt-6 text-center">
                 <p className="text-sm text-muted-foreground parrafo">
-                  ¿Necesita acceso al sistema?{" "}
-                  <button className="text-primary hover:underline">Contacte al administrador</button>
+                  ¿Necesita acceso al sistema?{" "}                 
+                    Contacte al administrador
                 </p>
               </div>
             </CardContent>
