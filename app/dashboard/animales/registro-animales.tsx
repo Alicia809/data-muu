@@ -1,176 +1,269 @@
 "use client"
- 
-import "./registro-animales.css"
 
-import { useState } from "react"
+import "./registro-animales.css"
+import React, { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
-import {
-  MdPets,
-  MdAdd,
-  MdEdit,
-  MdDelete,
-  MdSearch,
-  MdArrowBack,
-  MdImage,
-  MdSave,
-  MdCancel,
-} from "react-icons/md"
-
-import {
-  MdLogout,
-} from "react-icons/md"
+import { MdLogout, MdAdd, MdEdit, MdDelete, MdSearch, MdArrowBack, MdSave, MdCancel, MdCheckBox, MdCheckBoxOutlineBlank } from "react-icons/md"
+import { GiCow } from "react-icons/gi"
 import { PiCowDuotone } from "react-icons/pi"
 import { supabase } from "@/lib/supabaseClient"
 import { useRouter } from "next/navigation"
 
-export default function AnimalesPage() {
+interface Semoviente {
+  id: number
+  tipo_animal: string
+  color: string
+  venteado: string
+  cv_tipo_semoviente_id: string
+}
+
+interface Tipo_Semoviente {
+  id: number
+  nombre: string
+  descripcion: string
+}
+
+export default function FormSemoviente() {
+  const router = useRouter()
+
   const [showForm, setShowForm] = useState(false)
-  const [editingAnimal, setEditingAnimal] = useState(null)
+  const [showFormTipo, setShowFormTipo] = useState(false)
+  const [editingAnimal, setEditingAnimal] = useState<Semoviente | null>(null)
+
   const [searchTerm, setSearchTerm] = useState("")
-  const [selectedImage, setSelectedImage] = useState(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState("")
+  const [success, setSuccess] = useState("")
+
+  // semovientes
+  const [animales, setSemovientes] = useState<Semoviente[]>([])
+  // tipos semoviente
+  const [tiposAnimal, setTiposAnimal] = useState<Tipo_Semoviente[]>([])
+
+  // form semoviente
   const [formData, setFormData] = useState({
-    nombre: "",
+    tipo_animal: "",
     color: "",
-    Tipo_de_semoviente: "",
-    Venteado: "",
-    observaciones: "",
+    venteado: "",
+    cv_tipo_semoviente_id: "",
   })
 
-  // Tipos de semovientes
-  const [showFormTipo, setShowFormTipo] = useState(false)
-  const [editingTipo, setEditingTipo] = useState(null)
-  const [tipos, setTipos] = useState([
-    { id: 1, tipo: "Vaca", descripcion: "Animal hembra productora de leche" },
-    { id: 2, tipo: "Toro", descripcion: "Animal macho reproductor" },
-  ])
-  const [formTipo, setFormTipo] = useState({
-    tipo: "",
+  // form tipo semoviente
+  const [formTipoData, setFormTipoData] = useState({
+    nombre: "",
     descripcion: "",
   })
 
+  useEffect(() => {
+    fetchSemoviente()
+    fetchTipo_Semoviente()
+  }, [])
 
-  const router = useRouter()
-
+  // cerrar sesión
   const handleLogout = async () => {
-    // Cerrar sesión en Supabase
     await supabase.auth.signOut()
-    // Redirigir a login
     router.push("/login")
   }
 
-  const [animales, setAnimales] = useState([
-    {
-      id: 1,
-      nombre: "Thunder",
-      color: "Castaño",
-      Tipo_de_semoviente: "Macho",
-      observaciones: "Animal de competición",
-    },
-    {
-      id: 2,
-      nombre: "Bella",
-      color: "Blanco y Negro",
-      Tipo_de_semoviente: "Hembra",
-      observaciones: "Excelente productora de leche",
-    },
-  ])
+  // traer semovientes
+  const fetchSemoviente = async () => {
+    setIsLoading(true)
+    setError("")
+    try {
+      const res = await fetch("/api/animales")
+      const data = await res.json()
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    if (editingAnimal) {
-      setAnimales(
-        animales.map((animal) =>
-          animal.id === editingAnimal.id
-            ? { ...formData, id: editingAnimal.id, imagen: selectedImage || editingAnimal.imagen }
-            : animal
-        )
-      )
-    } else {
-      const newAnimal = {
-        ...formData,
-        id: Date.now(),
-        imagen: selectedImage || "/animal-gen-rico.png",
+      if (Array.isArray(data)) {
+        const mapped = data.map((c: any) => ({
+          id: c.id,
+          tipo_animal: c.tipo_animal,
+          color: c.color,
+          venteado: c.venteado,
+          cv_tipo_semoviente_id: c.cv_tipo_semoviente_id,
+        }))
+        setSemovientes(mapped)
+      } else {
+        setSemovientes([])
       }
-      setAnimales([...animales, newAnimal])
+    } catch (err) {
+      setError("Error al cargar los semovientes")      
+      console.error('Error detalle GET animales:', err);
+      setSemovientes([])
+    } finally {
+      setIsLoading(false)
     }
-    resetForm()
+  }
+
+  // traer tipos de semoviente
+  const fetchTipo_Semoviente = async () => {
+    setIsLoading(true)
+    setError("")
+    try {
+      const res = await fetch("/api/animales/tipo_animal")
+      const data = await res.json()
+
+      if (Array.isArray(data)) {
+        const mapped = data.map((c: any) => ({
+          id: c.id,
+          nombre: c.nombre,
+          descripcion: c.descripcion,
+        }))
+        setTiposAnimal(mapped)
+      } else {
+        setTiposAnimal([])
+      }
+    } catch (err) {
+      setError("Error al cargar los tipos de semovientes")
+      setTiposAnimal([])
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }))
+  }
+
+  const handleTipoInputChange = (field: string, value: string) => {
+    setFormTipoData((prev) => ({ ...prev, [field]: value }))
+  }
+
+  // submit semoviente
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsLoading(true)
+    setError("")
+    setSuccess("")
+
+    if (!formData.tipo_animal || !formData.color || !formData.venteado) {
+      setError("Por favor, complete todos los campos obligatorios")
+      setIsLoading(false)
+      return
+    }
+
+    try {
+      let res
+      if (editingAnimal) {
+        res = await fetch("/api/animales", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: editingAnimal.id, ...formData }),
+        })
+        setSuccess("Semoviente actualizado correctamente")
+      } else {
+        res = await fetch("/api/animales", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
+        })
+        setSuccess("Semoviente registrado correctamente")
+      }
+
+      await res.json()
+      fetchSemoviente()
+      setFormData({ tipo_animal: "", color: "", venteado:  "", cv_tipo_semoviente_id: "" })
+      setShowForm(false)
+      setEditingAnimal(null)
+    } catch (err) {
+      setError("Error al guardar el semoviente. Inténtelo de nuevo.")
+      console.error('Error detalle POST animales:', err);
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // submit tipo semoviente
+  const handleSubmitTipo = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsLoading(true)
+    setError("")
+    setSuccess("")
+
+    if (!formTipoData.nombre) {
+      setError("Por favor, complete el nombre del tipo")
+      setIsLoading(false)
+      return
+    }
+
+    try {
+      let res = await fetch("/api/animales/tipo_animal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formTipoData),
+      })
+      setSuccess("Tipo de semoviente registrado correctamente")
+      await res.json()
+      fetchTipo_Semoviente()
+      setFormTipoData({ nombre: "", descripcion: "" })
+      setShowFormTipo(false)
+    } catch (err) {
+      setError("Error al guardar el tipo. Inténtelo de nuevo.")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleEdit = (animal: Semoviente) => {
+    setFormData({
+      id: animal.id,
+      color: animal.color,
+      venteado: animal.venteado,
+      tipo_animal: animal.tipo_animal,                  // nombre del tipo
+      cv_tipo_semoviente_id: animal.cv_tipo_semoviente_id, // id del tipo
+    });
+    setEditingAnimal(animal);
+    setShowForm(true);
+  };
+
+
+  const handleDelete = async (id: number) => {
+    if (confirm("¿Está seguro de que desea eliminar este semoviente?")) {
+      try {
+        await fetch(`/api/animales?id=${id}`, { method: "DELETE" })
+        setSuccess("Semoviente eliminado correctamente")
+        fetchSemoviente()
+      } catch {
+        setError("Error al eliminar semoviente")
+      }
+    }
+  }
+
+  const handleDeleteTipo = async (id: number) => {
+    if (confirm("¿Está seguro de que desea eliminar este tipo de semoviente?")) {
+      try {
+        await fetch(`/api/animales/tipo_animal?id=${id}`, { method: "DELETE" })
+        setSuccess("Tipo de semoviente eliminado correctamente")
+        fetchTipo_Semoviente()
+      } catch {
+        setError("Error al eliminar tipo")
+      }
+    }
   }
 
   const resetForm = () => {
-    setFormData({
-      nombre: "",
-      color: "",
-      Tipo_de_semoviente: "",
-      Venteado: "",
-      observaciones: "",
-    })
-    setSelectedImage(null)
-    setShowForm(false)
+    setFormData({ tipo_animal: "", color: "", venteado: "", cv_tipo_semoviente_id: "" })
     setEditingAnimal(null)
+    setShowForm(false)
   }
 
-  const handleEdit = (animal) => {
-    setFormData(animal)
-    setSelectedImage(animal.imagen)
-    setEditingAnimal(animal)
-    setShowForm(true)
+  const resetFormTipo = () => {
+    setFormTipoData({ nombre: "", descripcion: "" })
+    setShowFormTipo(false)
   }
 
-  const handleDelete = (id) => {
-    if (confirm("¿Está seguro de que desea eliminar este animal?")) {
-      setAnimales(animales.filter((animal) => animal.id !== id))
-    }
-  }
+  const filteredAnimales = animales.filter((animal) => {
+    const venteadoText = animal.venteado ? "venteado" : "no venteado"; // convertir booleano a texto
+    return (
+      animal.tipo_animal.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      animal.color.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  });
 
-
-  const filteredAnimales = animales.filter(
-    (animal) =>
-      animal.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      animal.Tipo_de_semoviente.toLowerCase().includes(searchTerm.toLowerCase()) 
-  )
-
-  const handleSubmitTipo = (e) => {
-  e.preventDefault()
-  if (editingTipo) {
-    setTipos(
-      tipos.map((t) =>
-        t.id === editingTipo.id
-          ? { ...formTipo, id: editingTipo.id }
-          : t
-      )
-    )
-  } else {
-    const newTipo = {
-      ...formTipo,
-      id: Date.now(),
-    }
-    setTipos([...tipos, newTipo])
-  }
-  resetFormTipo()
-}
-
-const resetFormTipo = () => {
-  setFormTipo({ tipo: "", descripcion: "" })
-  setShowFormTipo(false)
-  setEditingTipo(null)
-}
-
-const handleEditTipo = (tipo) => {
-  setFormTipo(tipo)
-  setEditingTipo(tipo)
-  setShowFormTipo(true)
-}
-
-const handleDeleteTipo = (id) => {
-  if (confirm("¿Está seguro de que desea eliminar este tipo?")) {
-    setTipos(tipos.filter((t) => t.id !== id))
-  }
-}
 
   return (
     <div className="animales-page min-h-screen bg-background">
@@ -179,11 +272,7 @@ const handleDeleteTipo = (id) => {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
-              <img
-                src="/logo2.png"
-                alt="Logo"
-                className="w-50"
-              />
+              <img src="/logo2.png" alt="Logo" className="w-50" />
             </div>
           </div>
           <div className="flex items-center space-x-2">
@@ -194,7 +283,8 @@ const handleDeleteTipo = (id) => {
             </Button>
           </div>
         </div>
-      </header>      
+      </header>
+
       <div className="max-w-7xl mx-auto pt-5">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center space-x-4">
@@ -207,9 +297,7 @@ const handleDeleteTipo = (id) => {
                 <PiCowDuotone className="h-6 w-6 text-primary" />
                 <span>Registro de Semovientes</span>
               </h1>
-              <p className="parrafo text-muted-foreground">
-                Gestione el registro de animales 
-              </p>
+              <p className="parrafo text-muted-foreground">Gestione el registro de semovientes</p>
             </div>
           </div>
           <Button onClick={() => setShowFormTipo(true)} disabled={showFormTipo} className="nuevo-btn">
@@ -222,25 +310,18 @@ const handleDeleteTipo = (id) => {
           </Button>
         </div>
 
-        {showForm ? (
+        {/* FORMULARIO SEMOVIENTE */}
+        {showForm && (
           <Card className="mb-8 card-principal max-w-3xl mx-auto p-6">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="titulo">
-                    {editingAnimal ? "Editar Animal" : "Registrar Nuevo Semoviente"}
+                    {editingAnimal ? "Editar Semoviente" : "Registrar Nuevo Semoviente"}
                   </CardTitle>
-                  <CardDescription className="parrafo">
-                    Complete la información del animal
-                  </CardDescription>
+                  <CardDescription className="parrafo">Complete la información del animal</CardDescription>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    resetForm(); // esta ya limpia y cierra
-                  }}
-                >
+                <Button variant="ghost" size="sm" onClick={resetForm}>
                   <MdCancel className="h-4 w-4" />
                 </Button>
               </div>
@@ -248,48 +329,54 @@ const handleDeleteTipo = (id) => {
 
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6 w-full max-w-2xl mx-auto">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                   <div>
-                    <Label htmlFor="nombre" className="parrafo">Nombre *</Label>
-                    <Input
-                      id="nombre"
-                      value={formData.nombre}
-                      onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
-                      required
-                      className="parrafo card-content"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="color" className="parrafo">Color</Label>
-                    <Input
-                      id="color"
-                      value={formData.color}
-                      onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-                      className="parrafo card-content"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  <div>
-                    <Label htmlFor="Tipo_de_semoviente" className="parrafo">Tipo de semoviente</Label>
+                    <Label htmlFor="tipo_animal" className="parrafo">Tipo de semoviente</Label>
                     <select
-                      id="Tipo_de_semoviente"
-                      value={formData.Tipo_de_semoviente}
-                      onChange={(e) => setFormData({ ...formData, Tipo_de_semoviente: e.target.value })}
-                      className="w-full px-3 py-2 border border-border rounded-md bg-background parrafo card-content"
+                      id="tipo_animal"
+                      value={formData.cv_tipo_semoviente_id || ""}
+                      onChange={(e) => {
+                        const selectedTipo = tiposAnimal.find(
+                          (tipo) => tipo.id === Number(e.target.value)
+                        );
+                        if (selectedTipo) {
+                          setFormData({
+                            ...formData,
+                            cv_tipo_semoviente_id: selectedTipo.id,
+                            tipo_animal: selectedTipo.nombre, // enviar también el nombre
+                          });
+                        }
+                      }}
+                      className="mt-1 block w-full border border-gray-300 rounded-md p-2"
+                      required
                     >
-                      <option value="">Seleccionar</option>
-                      <option value="Vaca">Vaca</option>
-                      <option value="Toro">Toro</option>
+                      <option value="">Seleccione un tipo</option>
+                      {tiposAnimal.map((tipo) => (
+                        <option key={tipo.id} value={tipo.id}>
+                          {tipo.nombre}
+                        </option>
+                      ))}
                     </select>
                   </div>
                   <div>
-                    <Label htmlFor="Venteado" className="parrafo">¿Venteado?</Label>
+                    <Label htmlFor="color" className="parrafo">
+                      Color
+                    </Label>
+                    <Input
+                      id="color"
+                      value={formData.color}
+                      onChange={(e) => handleInputChange("color", e.target.value)}
+                      className="parrafo card-content"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="Venteado" className="parrafo">
+                      ¿Venteado?
+                    </Label>
                     <select
                       id="Venteado"
-                      value={formData.Venteado}
-                      onChange={(e) => setFormData({ ...formData, Venteado: e.target.value })}
+                      value={formData.venteado}
+                     onChange={(e) => handleInputChange("venteado", e.target.value === "Sí" ? "Sí" : "No")}
                       className="w-full px-3 py-2 border border-border rounded-md bg-background parrafo card-content"
                     >
                       <option value="">Seleccionar</option>
@@ -299,18 +386,6 @@ const handleDeleteTipo = (id) => {
                   </div>
                 </div>
 
-                <div>
-                  <Label htmlFor="observaciones" className="parrafo">Observaciones</Label>
-                  <Textarea
-                    id="observaciones"
-                    value={formData.observaciones}
-                    onChange={(e) => setFormData({ ...formData, observaciones: e.target.value })}
-                    rows={3}
-                    className="parrafo card-content"
-                  />
-                </div>
-
-                {/* Botones */}
                 <div className="flex space-x-4">
                   <Button type="submit" className="nuevo-btn">
                     <MdSave className="h-4 w-4 mr-2" />
@@ -323,66 +398,67 @@ const handleDeleteTipo = (id) => {
               </form>
             </CardContent>
           </Card>
-        ) : showFormTipo ? (
-            <Card className="mb-8 card-principal max-w-3xl mx-auto p-6">
-              <CardHeader>
-                <div className="flex items-center justify-between">
+        )}
+
+        {/* FORMULARIO TIPO SEMOVIENTE */}
+        {showFormTipo && (
+          <Card className="mb-8 card-principal max-w-3xl mx-auto p-6">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="titulo">Registrar Tipo de Semoviente</CardTitle>
+                  <CardDescription className="parrafo">Complete la información del tipo de semoviente</CardDescription>
+                </div>
+                <Button variant="ghost" size="sm" onClick={resetFormTipo}>
+                  <MdCancel className="h-4 w-4" />
+                </Button>
+              </div>
+            </CardHeader>
+
+            <CardContent>
+              <form onSubmit={handleSubmitTipo} className="space-y-6 w-full max-w-2xl mx-auto">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div>
-                    <CardTitle className="titulo">
-                      {editingTipo ? "Editar Tipo de Semoviente" : "Registrar Tipo de Semoviente"}
-                    </CardTitle>
-                    <CardDescription className="parrafo">
-                      Complete la información del tipo de semoviente
-                    </CardDescription>
+                    <Label htmlFor="nombre" className="parrafo">
+                      Nombre del Tipo *
+                    </Label>
+                    <Input
+                      id="nombre"
+                      value={formTipoData.nombre}
+                      onChange={(e) => handleTipoInputChange("nombre", e.target.value)}
+                      required
+                      className="parrafo card-content"
+                    />
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => resetFormTipo()}
-                  >
-                    <MdCancel className="h-4 w-4" />
+                  <div>
+                    <Label htmlFor="descripcion" className="parrafo">
+                      Descripción
+                    </Label>
+                    <Textarea
+                      id="descripcion"
+                      value={formTipoData.descripcion}
+                      onChange={(e) => handleTipoInputChange("descripcion", e.target.value)}
+                      className="parrafo card-content"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex space-x-4">
+                  <Button type="submit" className="nuevo-btn">
+                    <MdSave className="h-4 w-4 mr-2" />
+                    Registrar Tipo
+                  </Button>
+                  <Button type="button" variant="outline" onClick={resetFormTipo} className="regresar-btn">
+                    Cancelar
                   </Button>
                 </div>
-              </CardHeader>
+              </form>
+            </CardContent>
+          </Card>
+        )}
 
-              <CardContent>
-                <form onSubmit={handleSubmitTipo} className="space-y-6 w-full max-w-2xl mx-auto">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <div>
-                      <Label htmlFor="tipo" className="parrafo">Tipo de Semoviente *</Label>
-                      <Input
-                        id="tipo"
-                        value={formTipo.tipo}
-                        onChange={(e) => setFormTipo({ ...formTipo, tipo: e.target.value })}
-                        required
-                        className="parrafo card-content"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="descripcion" className="parrafo">Descripción</Label>
-                      <Textarea
-                        id="descripcion"
-                        value={formTipo.descripcion}
-                        onChange={(e) => setFormTipo({ ...formTipo, descripcion: e.target.value })}
-                        className="parrafo card-content"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Botones */}
-                  <div className="flex space-x-4">
-                    <Button type="submit" className="nuevo-btn">
-                      <MdSave className="h-4 w-4 mr-2" />
-                      {editingTipo ? "Actualizar Tipo" : "Registrar Tipo"}
-                    </Button>
-                    <Button type="button" variant="outline" onClick={resetFormTipo} className="regresar-btn">
-                      Cancelar
-                    </Button>
-                  </div>
-                </form>
-              </CardContent>
-            </Card>              
-        ) : (
+        {/* LISTA DE SEMOVIENTES */}
+        {!showForm && !showFormTipo && (
           <div className="space-y-6">
             {/* Búsqueda */}
             <Card className="card-principal">
@@ -391,7 +467,7 @@ const handleDeleteTipo = (id) => {
                   <div className="relative flex-1  card-content">
                     <MdSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                     <Input
-                      placeholder="Buscar por nombre o propietario..."
+                      placeholder="Buscar por tipo o color"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       className="pl-10 parrafo"
@@ -408,34 +484,33 @@ const handleDeleteTipo = (id) => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredAnimales.map((animal) => (
                 <Card key={animal.id} className="overflow-hidden w-[300px] p-4 mx-auto">
-                  <div className="inline-flex items-center justify-center">
-                    
-                  </div>
                   <CardHeader>
                     <div className="flex items-center justify-center">
-                      <CardTitle className="text-lg titulo">{animal.nombre}</CardTitle>
+                      <CardTitle className="text-lg titulo">
+                        <GiCow className="h-10 w-10 mr-2" />
+                      </CardTitle>
                     </div>
                   </CardHeader>
                   <CardContent>
-                    
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Color:</span>
-                        <span>{animal.color}</span>
-                      </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Color:</span>
+                      <span>{animal.color}</span>
+                    </div>
 
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Tipo de Semoviente:</span>
-                        <span>{animal.Tipo_de_semoviente}</span>
-                      </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Tipo de Semoviente:</span>
+                      <span>{animal.tipo_animal}</span>
+                    </div>
 
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Venteado:</span>
-                        <span>{animal.Venteado ? "Sí" : "No"}</span>
-                      </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Venteado:</span>
+                      {animal.venteado.trim().toLowerCase() === "sí" ? (
+                        <MdCheckBox className="text-green-600 w-5 h-5" />
+                      ) : (
+                        <MdCheckBoxOutlineBlank className="text-green-600 w-5 h-5" />
+                      )}
+                    </div>
 
-
-                   
-                    
                     <div className="flex space-x-2 mt-4">
                       <Button size="sm" variant="outline" onClick={() => handleEdit(animal)} className="nuevo-btn">
                         <MdEdit className="h-4 w-4 mr-1" />
@@ -468,34 +543,33 @@ const handleDeleteTipo = (id) => {
                 </CardContent>
               </Card>
             )}
-            
+
             {/* Lista de Tipos de Semoviente */}
             <Card>
               <CardHeader>
                 <CardTitle className="titulo">Tipos de Semovientes Registrados</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {tipos.map((t) => (
-                    <Card key={t.id} className="overflow-hidden w-[300px] p-4 mx-auto">
-                      <CardHeader>
-                        <div className="flex items-center justify-center">
-                          <CardTitle className="text-lg titulo">{t.tipo}</CardTitle>
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-muted-foreground">{t.descripcion}</p>
-                        <div className="flex space-x-2 mt-4">
-                          <Button size="sm" variant="outline" onClick={() => handleEditTipo(t)} className="nuevo-btn">
-                            <MdEdit className="h-4 w-4 mr-1" />
-                            Editar
-                          </Button>
-                          <Button size="sm" variant="outline" onClick={() => handleDeleteTipo(t.id)} className="regresar-btn">
-                            <MdDelete className="h-4 w-4 mr-1" />
-                            Eliminar
-                          </Button>
-                        </div>
-                      </CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {tiposAnimal.map((t) => (
+                    <Card
+                      key={t.id}
+                      className="overflow-hidden w-[200px] p-2 mx-auto"
+                    >
+                      <div className="flex items-center justify-between"> 
+                        {/* Nombre del tipo */}
+                        <CardTitle className="text-lg titulo parrafo">{t.nombre}</CardTitle>
+
+                        {/* Botón eliminar */}
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleDeleteTipo(t.id)}
+                          className="flex items-center regresar-btn"
+                        >
+                          <MdDelete className="h-4 w-4 mr-1" />                          
+                        </Button>
+                      </div>
                     </Card>
                   ))}
                 </div>
@@ -503,7 +577,6 @@ const handleDeleteTipo = (id) => {
             </Card>
           </div>
         )}
-
       </div>
     </div>
   )

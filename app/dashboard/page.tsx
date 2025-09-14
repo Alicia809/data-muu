@@ -1,6 +1,6 @@
 "use client"
 import "./page.css"
-import { useState } from "react"
+import { useEffect, useState } from 'react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -47,6 +47,54 @@ export default function DashboardPage() {
     window.location.href = "/dashboard/herraduras"
   }
 
+  interface Totales {
+    contribuyentes: number | null
+    semovientes: number | null
+    fierros: number | null
+    cartasVenta: number | null
+  }
+    
+  interface Ultimos {
+    ultimoCliente: { p_nombre: string; s_nombre: string; p_apellido: string; s_apellido: string } | null
+    ultimoDocumento: { correlativo: number; fecha_transaccion: Date} | null
+  }
+
+  const [totales, setTotales] = useState<Totales>({
+    contribuyentes: null,
+    semovientes: null,
+    fierros: null,
+    cartasVenta: null
+  })
+
+  const [ultimos, setUltimos] = useState<Ultimos>({
+    ultimoCliente: null,
+    ultimoDocumento: null,
+  })
+
+  useEffect(() => {
+    const fetchDatos = async () => {
+      const res = await fetch('/api')
+      const data = await res.json()
+      console.log('API response:', data)
+
+      setTotales({
+        contribuyentes: data.contribuyentes,
+        semovientes: data.semovientes,
+        fierros: data.fierros,
+        cartasVenta: data.cartasVenta
+      })
+
+      setUltimos({
+        ultimoCliente: data.ultimoCliente ?? null,
+        ultimoDocumento: data.ultimoDocumento ?? null
+      })
+    }
+
+    fetchDatos()
+  }, [])
+
+
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -65,8 +113,8 @@ export default function DashboardPage() {
             </div>
           </div>
           <div className="flex items-center space-x-2">
-            <span className="text-sm text-muted-foreground hidden sm:block">Bienvenido, Usuario</span>
-            <Button variant="ghost" size="sm" onClick={handleLogout} className="logout-button">
+            <span className="text-sm text-muted-foreground hidden sm:block titulo">Bienvenido, Usuario</span>
+            <Button variant="ghost" size="sm" onClick={handleLogout} className="logout-button parrafo">
               <MdLogout className="h-4 w-4 mr-2" />
               Salir
             </Button>
@@ -90,23 +138,23 @@ export default function DashboardPage() {
                   </h2>
                 </div>
                 <div className="space-y-1">
-                  <Button variant="ghost" className="w-full justify-start bg-accent text-accent-foreground boton-panel">
+                  <Button variant="ghost" className="w-full justify-start bg-accent text-accent-foreground boton-panel parrafo">
                     <MdBarChart className="h-4 w-4 mr-3" />
                     Panel principal
                   </Button>
-                  <Button variant="ghost" className="w-full justify-start boton-panel" onClick={navigateToClients}>
+                  <Button variant="ghost" className="w-full justify-start boton-panel parrafo" onClick={navigateToClients}>
                     <MdPeople className="h-4 w-4 mr-3" />
                     Gestión de Contribuyentes
                   </Button>
-                  <Button variant="ghost" className="w-full justify-start boton-panel" onClick={navigateToAnimals}>
+                  <Button variant="ghost" className="w-full justify-start boton-panel parrafo" onClick={navigateToAnimals}>
                     <PiCowDuotone className="h-4 w-4 mr-3" />
                     Registro de Semovientes
                   </Button>
-                  <Button variant="ghost" className="w-full justify-start boton-panel" onClick={navigateToHorseshoes}>
+                  <Button variant="ghost" className="w-full justify-start boton-panel parrafo" onClick={navigateToHorseshoes}>
                     <TbHorseshoe className="h-4 w-4 mr-3" />
                     Registro de Fierros
                   </Button>
-                  <Button variant="ghost" className="w-full justify-start boton-panel" onClick={navigateToDocuments}>
+                  <Button variant="ghost" className="w-full justify-start boton-panel parrafo" onClick={navigateToDocuments}>
                     <MdDescription className="h-4 w-4 mr-3" />
                     Generar Cartas de Venta
                   </Button>
@@ -118,7 +166,7 @@ export default function DashboardPage() {
                   Herramientas
                 </h2>
                 <div className="space-y-1">
-                  <Button variant="ghost" className="w-full justify-start boton-panel">
+                  <Button variant="ghost" className="w-full justify-start boton-panel parrafo">
                     <MdSettings className="h-4 w-4 mr-3" />
                     Configuración
                   </Button>
@@ -143,7 +191,7 @@ export default function DashboardPage() {
             {/* Encabezado del dashboard */}
             <div className="mb-8">
               <h1 className="text-2xl font-bold text-foreground mb-2">Panel de Control</h1>
-              <p className="text-muted-foreground">
+              <p className="text-muted-foreground parrafo">
                 Gestione la información de los contribuyentes, semovientes, fierros y genere documentos de manera eficiente para
                 llevar un registro de las transacciones y respaldar sus operaciones.
               </p>
@@ -153,45 +201,49 @@ export default function DashboardPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
               <Card className="card-hover">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Contribuyentes</CardTitle>
+                  <CardTitle className="text-sm font-medium parrafo2">Contribuyentes Registrados</CardTitle>
                   <MdPeople className="h-4 w-4 text-muted-foreground icono-dashboard" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">1,234</div>
-                  <p className="text-xs text-muted-foreground">+12% desde el mes pasado</p>
+                  <div className="text-2xl font-bold parrafo2">
+                    {totales.contribuyentes !== null ? totales.contribuyentes.toLocaleString() : <p className="text-muted-foreground parrafo">Cargando...</p>}
+                  </div>
                 </CardContent>
               </Card>
 
               <Card className="card-hover">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Semovientes Registrados</CardTitle>
+                  <CardTitle className="text-sm font-medium parrafo2">Semovientes Registrados</CardTitle>
                   <PiCowDuotone className="h-4 w-4 text-muted-foreground icono-dashboard" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">567</div>
-                  <p className="text-xs text-muted-foreground">+15% desde el mes pasado</p>
+                  <div className="text-2xl font-bold parrafo2">
+                    {totales.semovientes !== null ? totales.semovientes.toLocaleString() : <p className="text-muted-foreground parrafo">Cargando...</p>}
+                  </div>
                 </CardContent>
               </Card>
 
               <Card className="card-hover">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Fierros Registradas</CardTitle>
+                  <CardTitle className="text-sm font-medium parrafo2">Fierros Registradas</CardTitle>
                   <TbHorseshoe className="h-4 w-4 text-muted-foreground icono-dashboard" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">342</div>
-                  <p className="text-xs text-muted-foreground">+8% desde el mes pasado</p>
+                  <div className="text-2xl font-bold parrafo2">
+                    {totales.fierros !== null ? totales.fierros.toLocaleString() : <p className="text-muted-foreground parrafo">Cargando...</p>}
+                  </div>
                 </CardContent>
               </Card>
 
               <Card className="card-hover">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Cartas de Venta Generadas</CardTitle>
+                  <CardTitle className="text-sm font-medium parrafo2">Cartas de Venta Generadas</CardTitle>
                   <MdDescription className="h-4 w-4 text-muted-foreground icono-dashboard" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">856</div>
-                  <p className="text-xs text-muted-foreground">+8% desde el mes pasado</p>
+                  <div className="text-2xl font-bold parrafo2">
+                    {totales.cartasVenta !== null ? totales.cartasVenta.toLocaleString() : <p className="text-muted-foreground parrafo">Cargando...</p>}
+                  </div>
                 </CardContent>
               </Card>
             </div>
@@ -202,17 +254,17 @@ export default function DashboardPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
                     <MdPeople className="h-5 w-5 text-primary icono-dashboard" />
-                    <span>Gestión de Contribuyentes</span>
+                    <span className="parrafo3">Gestión de Contribuyentes</span>
                   </CardTitle>
-                  <CardDescription>Registre nuevos clientes y gestione la información existente</CardDescription>
+                  <CardDescription  className="parrafo">Registre nuevos clientes y gestione la información existente</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    <Button onClick={navigateToClients} className="w-full dashboard-btn">
+                    <Button onClick={navigateToClients} className="w-full dashboard-btn parrafo">
                       <MdAdd className="h-4 w-4 mr-2" />
                       Registrar Nuevo Contribuyente
                     </Button>
-                    <Button variant="outline" className="w-full bg-transparent dashboard-btn-1">
+                    <Button onClick={navigateToClients}  variant="outline" className="w-full bg-transparent dashboard-btn-1 parrafo">
                       <MdPeople className="h-4 w-4 mr-2" />
                       Ver Lista de Contribuyentes
                     </Button>
@@ -224,17 +276,17 @@ export default function DashboardPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
                     <PiCowDuotone className="h-5 w-5 text-primary icono-dashboard" />
-                    <span>Registro de Semovientes</span>
+                    <span className="parrafo3">Registro de Semovientes</span>
                   </CardTitle>
-                  <CardDescription>Registre semovientes con imágenes y características detalladas</CardDescription>
+                  <CardDescription className="parrafo">Registre semovientes con imágenes y características detalladas</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    <Button onClick={navigateToAnimals} className="w-full dashboard-btn">
+                    <Button onClick={navigateToAnimals} className="w-full dashboard-btn parrafo">
                       <MdAdd className="h-4 w-4 mr-2" />
                       Registrar Nuevo Semoviente
                     </Button>
-                    <Button variant="outline" className="w-full bg-transparent dashboard-btn-1">
+                    <Button onClick={navigateToAnimals} variant="outline" className="w-full bg-transparent dashboard-btn-1 parrafo">
                       <PiCowDuotone className="h-4 w-4 mr-2" />
                       Ver Lista de Semovientes
                     </Button>
@@ -246,17 +298,17 @@ export default function DashboardPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
                     <TbHorseshoe className="h-5 w-5 text-primary icono-dashboard" />
-                    <span>Registro de Fierros</span>
+                    <span className="parrafo3">Registro de Fierros</span>
                   </CardTitle>
-                  <CardDescription>Registre fierros con imágenes y datos del propietario</CardDescription>
+                  <CardDescription className="parrafo3">Registre fierros con imágenes y datos del propietario</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    <Button onClick={navigateToHorseshoes} className="w-full dashboard-btn">
+                    <Button onClick={navigateToHorseshoes} className="w-full dashboard-btn parrafo">
                       <MdAdd className="h-4 w-4 mr-2" />
                       Registrar Nuevo Fierro
                     </Button>
-                    <Button variant="outline" className="w-full bg-transparent dashboard-btn-1">
+                    <Button onClick={navigateToHorseshoes} variant="outline" className="w-full bg-transparent dashboard-btn-1 parrafo">
                       <TbHorseshoe className="h-4 w-4 mr-2" />
                       Ver Lista de Fierros
                     </Button>
@@ -268,17 +320,17 @@ export default function DashboardPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
                     <MdDescription className="h-5 w-5 text-primary icono-dashboard" />
-                    <span>Generación de Documentos</span>
+                    <span className="parrafo3">Generación de Documentos</span>
                   </CardTitle>
-                  <CardDescription>Cree y genere cartas de venta para impresión</CardDescription>
+                  <CardDescription className="parrafo3">Cree y genere cartas de venta para impresión</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    <Button onClick={navigateToDocuments} className="w-full dashboard-btn">
+                    <Button onClick={navigateToDocuments} className="w-full dashboard-btn parrafo">
                       <MdAdd className="h-4 w-4 mr-2" />
                       Crear Nuevo Documento
                     </Button>
-                    <Button variant="outline" className="w-full bg-transparent dashboard-btn-1">
+                    <Button onClick={navigateToDocuments} variant="outline" className="w-full bg-transparent dashboard-btn-1 parrafo">
                       <MdDescription className="h-4 w-4 mr-2" />
                       Ver Documentos Recientes
                     </Button>
@@ -288,32 +340,33 @@ export default function DashboardPage() {
             </div>
 
             {/* Actividad reciente */}
-            <Card>
+            <Card className="card-principal">
               <CardHeader>
-                <CardTitle>Actividad Reciente</CardTitle>
-                <CardDescription>Últimas acciones realizadas en el sistema</CardDescription>
+                <CardTitle className="titulo">Actividad Reciente</CardTitle>
+                <CardDescription className="parrafo3">Últimas acciones realizadas en el sistema</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div className="flex items-center space-x-4 p-3 bg-muted/50 rounded-lg">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">Cliente registrado: Juan Pérez</p>
-                      <p className="text-xs text-muted-foreground">Hace 2 horas</p>
+                    <div className="w-2 h-2 bg-[#FBC02D] rounded-full"></div>
+                    <div className="text-sm font-medium">
+                      <p className="parrafo3">
+                        Último cliente registrado:{' '}
+                        {ultimos.ultimoCliente
+                          ? `${ultimos.ultimoCliente.p_nombre} ${ultimos.ultimoCliente.s_nombre ?? ''} ${ultimos.ultimoCliente.p_apellido} ${ultimos.ultimoCliente.s_apellido ?? ''}`.trim()
+                          : 'Cargando...'}
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-4 p-3 bg-muted/50 rounded-lg">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                    <div className="w-2 h-2 bg-[#FBC02D] rounded-full"></div>
                     <div className="flex-1">
-                      <p className="text-sm font-medium">Documento generado: Contrato #1234</p>
-                      <p className="text-xs text-muted-foreground">Hace 4 horas</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-4 p-3 bg-muted/50 rounded-lg">
-                    <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">Cliente actualizado: María García</p>
-                      <p className="text-xs text-muted-foreground">Hace 6 horas</p>
+                      <p className="parrafo3">
+                        Último documento generado:{' '}
+                        {ultimos.ultimoDocumento
+                          ? `#${ultimos.ultimoDocumento.correlativo}`
+                          : 'Cargando...'}
+                      </p>
                     </div>
                   </div>
                 </div>
