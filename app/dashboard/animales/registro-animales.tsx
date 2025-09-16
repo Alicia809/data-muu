@@ -11,8 +11,10 @@ import { Badge } from "@/components/ui/badge"
 import { MdLogout, MdAdd, MdEdit, MdDelete, MdSearch, MdArrowBack, MdSave, MdCancel, MdCheckBox, MdCheckBoxOutlineBlank } from "react-icons/md"
 import { GiCow } from "react-icons/gi"
 import { PiCowDuotone } from "react-icons/pi"
-import { supabase } from "@/lib/supabaseClient"
 import { useRouter } from "next/navigation"
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+
+const supabase = createClientComponentClient();
 
 interface Semoviente {
   id: number
@@ -44,6 +46,23 @@ export default function FormSemoviente() {
   const [animales, setSemovientes] = useState<Semoviente[]>([])
   // tipos semoviente
   const [tiposAnimal, setTiposAnimal] = useState<Tipo_Semoviente[]>([])
+
+  const [userName, setUserName] = useState("")
+
+  useEffect(() => {
+    const getUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
+      if (user) {
+        // Si guardaste el nombre en user_metadata al registrarlo:
+        setUserName(user.user_metadata?.nombre || user.email) 
+      }
+    }
+
+    getUser()
+  }, [])
 
   // form semoviente
   const [formData, setFormData] = useState({
@@ -154,14 +173,18 @@ export default function FormSemoviente() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ id: editingAnimal.id, ...formData }),
         })
-        setSuccess("Semoviente actualizado correctamente")
+        setSuccess("Semoviente actualizado correctamente");
+        // Limpiar la alerta de éxito después de 10 segundos
+        setTimeout(() => setSuccess(""), 10000);
       } else {
         res = await fetch("/api/animales", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(formData),
         })
-        setSuccess("Semoviente registrado correctamente")
+        setSuccess("Semoviente registrado correctamente");
+        // Limpiar la alerta de éxito después de 10 segundos
+        setTimeout(() => setSuccess(""), 10000);
       }
 
       await res.json()
@@ -170,7 +193,11 @@ export default function FormSemoviente() {
       setShowForm(false)
       setEditingAnimal(null)
     } catch (err) {
-      setError("Error al guardar el semoviente. Inténtelo de nuevo.")
+      setError("Error al guardar el semoviente. Inténtelo de nuevo.");
+      // Limpiar el error después de 10 segundos (10000 ms)
+      setTimeout(() => {
+        setError("");
+      }, 10000);
       console.error('Error detalle POST animales:', err);
     } finally {
       setIsLoading(false)
@@ -225,10 +252,16 @@ export default function FormSemoviente() {
     if (confirm("¿Está seguro de que desea eliminar este semoviente?")) {
       try {
         await fetch(`/api/animales?id=${id}`, { method: "DELETE" })
-        setSuccess("Semoviente eliminado correctamente")
-        fetchSemoviente()
+        setSuccess("Semoviente eliminado correctamente");
+        // Limpiar la alerta de éxito después de 10 segundos
+        setTimeout(() => setSuccess(""), 10000);
+        fetchSemoviente();
       } catch {
-        setError("Error al eliminar semoviente")
+        setError("Error al eliminar semoviente");
+        // Limpiar el error después de 10 segundos (10000 ms)
+        setTimeout(() => {
+          setError("");
+        }, 10000);
       }
     }
   }
@@ -276,8 +309,8 @@ export default function FormSemoviente() {
             </div>
           </div>
           <div className="flex items-center space-x-2">
-            <span className="text-sm text-muted-foreground hidden sm:block">Bienvenido, Usuario</span>
-            <Button variant="ghost" size="sm" onClick={handleLogout} className="logout-button">
+            <span className="text-sm text-muted-foreground hidden sm:block titulo">Bienvenido, {userName || "Usuario"}</span>
+            <Button variant="ghost" size="sm" onClick={handleLogout} className="logout-button parrafo">
               <MdLogout className="h-4 w-4 mr-2" />
               Salir
             </Button>
@@ -288,7 +321,7 @@ export default function FormSemoviente() {
       <div className="max-w-7xl mx-auto pt-5">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center space-x-4">
-            <Button variant="ghost" onClick={() => (window.location.href = "/dashboard")} className="regresar-btn">
+            <Button variant="ghost" onClick={() => (window.location.href = "/dashboard")} className="regresar-btn parrafo">
               <MdArrowBack className="h-4 w-4 mr-2" />
               Panel Principal
             </Button>
@@ -300,11 +333,11 @@ export default function FormSemoviente() {
               <p className="parrafo text-muted-foreground">Gestione el registro de semovientes</p>
             </div>
           </div>
-          <Button onClick={() => setShowFormTipo(true)} disabled={showFormTipo} className="nuevo-btn">
+          <Button onClick={() => setShowFormTipo(true)} disabled={showFormTipo} className="nuevo-btn parrafo">
             <MdAdd className="h-4 w-4 mr-2" />
             Registrar Tipo de Semoviente
           </Button>
-          <Button onClick={() => setShowForm(true)} disabled={showForm} className="nuevo-btn">
+          <Button onClick={() => setShowForm(true)} disabled={showForm} className="nuevo-btn parrafo">
             <MdAdd className="h-4 w-4 mr-2" />
             Registrar Semoviente
           </Button>
@@ -347,7 +380,7 @@ export default function FormSemoviente() {
                           });
                         }
                       }}
-                      className="mt-1 block w-full border border-gray-300 rounded-md p-2"
+                      className="mt-1 block w-full border border-gray-300 rounded-md p-2 parrafo"
                       required
                     >
                       <option value="">Seleccione un tipo</option>
@@ -387,11 +420,11 @@ export default function FormSemoviente() {
                 </div>
 
                 <div className="flex space-x-4">
-                  <Button type="submit" className="nuevo-btn">
+                  <Button type="submit" className="nuevo-btn parrafo">
                     <MdSave className="h-4 w-4 mr-2" />
                     {editingAnimal ? "Actualizar Semoviente" : "Registrar Semoviente"}
                   </Button>
-                  <Button type="button" variant="outline" onClick={resetForm} className="regresar-btn">
+                  <Button type="button" variant="outline" onClick={resetForm} className="regresar-btn parrafo">
                     Cancelar
                   </Button>
                 </div>
@@ -444,11 +477,11 @@ export default function FormSemoviente() {
                 </div>
 
                 <div className="flex space-x-4">
-                  <Button type="submit" className="nuevo-btn">
+                  <Button type="submit" className="nuevo-btn parrafo">
                     <MdSave className="h-4 w-4 mr-2" />
                     Registrar Tipo
                   </Button>
-                  <Button type="button" variant="outline" onClick={resetFormTipo} className="regresar-btn">
+                  <Button type="button" variant="outline" onClick={resetFormTipo} className="regresar-btn parrafo">
                     Cancelar
                   </Button>
                 </div>
@@ -464,7 +497,7 @@ export default function FormSemoviente() {
             <Card className="card-principal">
               <CardContent className="pt-6">
                 <div className="flex items-center space-x-4">
-                  <div className="relative flex-1  card-content">
+                  <div className="relative flex-1 card-content">
                     <MdSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                     <Input
                       placeholder="Buscar por tipo o color"
@@ -481,7 +514,7 @@ export default function FormSemoviente() {
             </Card>
 
             {/* Lista de animales */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {filteredAnimales.map((animal) => (
                 <Card key={animal.id} className="overflow-hidden w-[300px] p-4 mx-auto">
                   <CardHeader>
@@ -492,17 +525,17 @@ export default function FormSemoviente() {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="flex justify-between">
+                    <div className="flex justify-between parrafo">
                       <span className="text-muted-foreground">Color:</span>
                       <span>{animal.color}</span>
                     </div>
 
-                    <div className="flex justify-between">
+                    <div className="flex justify-between parrafo">
                       <span className="text-muted-foreground">Tipo de Semoviente:</span>
                       <span>{animal.tipo_animal}</span>
                     </div>
 
-                    <div className="flex justify-between">
+                    <div className="flex justify-between parrafo">
                       <span className="text-muted-foreground">Venteado:</span>
                       {animal.venteado.trim().toLowerCase() === "sí" ? (
                         <MdCheckBox className="text-green-600 w-5 h-5" />
@@ -512,11 +545,11 @@ export default function FormSemoviente() {
                     </div>
 
                     <div className="flex space-x-2 mt-4">
-                      <Button size="sm" variant="outline" onClick={() => handleEdit(animal)} className="nuevo-btn">
+                      <Button size="sm" variant="outline" onClick={() => handleEdit(animal)} className="nuevo-btn parrafo">
                         <MdEdit className="h-4 w-4 mr-1" />
                         Editar
                       </Button>
-                      <Button size="sm" variant="outline" onClick={() => handleDelete(animal.id)} className="regresar-btn">
+                      <Button size="sm" variant="outline" onClick={() => handleDelete(animal.id)} className="regresar-btn parrafo">
                         <MdDelete className="h-4 w-4 mr-1" />
                         Eliminar
                       </Button>
@@ -531,13 +564,13 @@ export default function FormSemoviente() {
                 <CardContent className="text-center py-12 parrafo">
                   <PiCowDuotone className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                   <h3 className="text-lg mb-2 titulo">No se encontraron animales</h3>
-                  <p className="text-muted-foreground mb-4">
+                  <p className="text-muted-foreground mb-4 parrafo">
                     {searchTerm
                       ? "No hay animales que coincidan con su búsqueda."
                       : "Comience registrando su primer animal."}
                   </p>
                   <Button onClick={() => setShowForm(true)} className="nuevo-btn">
-                    <MdAdd className="h-4 w-4 mr-2" />
+                    <MdAdd className="h-4 w-4 mr-2 parrafo" />
                     Registrar Primer Animal
                   </Button>
                 </CardContent>
@@ -545,16 +578,16 @@ export default function FormSemoviente() {
             )}
 
             {/* Lista de Tipos de Semoviente */}
-            <Card>
+            <Card className="mb-6">
               <CardHeader>
                 <CardTitle className="titulo">Tipos de Semovientes Registrados</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6">
                   {tiposAnimal.map((t) => (
                     <Card
                       key={t.id}
-                      className="overflow-hidden w-[200px] p-2 mx-auto"
+                      className="overflow-hidden w-[180px] p-1.5 mx-auto"
                     >
                       <div className="flex items-center justify-between"> 
                         {/* Nombre del tipo */}
@@ -562,12 +595,11 @@ export default function FormSemoviente() {
 
                         {/* Botón eliminar */}
                         <Button
-                          size="sm"
                           variant="outline"
                           onClick={() => handleDeleteTipo(t.id)}
-                          className="flex items-center regresar-btn"
+                          className="flex items-center regresar-btn px- py-1"
                         >
-                          <MdDelete className="h-4 w-4 mr-1" />                          
+                          <MdDelete className="h-2 w-2 mr-1" />                          
                         </Button>
                       </div>
                     </Card>

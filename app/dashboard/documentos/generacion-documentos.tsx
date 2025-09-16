@@ -5,7 +5,7 @@ import { jsPDF } from "jspdf"
 import "./fonts/Montserrat-Bold-normal.js"
 import "./fonts/Roboto-Light-normal.js"
 import type React from "react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react" 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -32,27 +32,27 @@ import {
 } from "lucide-react"
 import { MdLogout } from "react-icons/md"
 import { format } from "date-fns"
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 
-interface Cliente {
+const supabase = createClientComponentClient();
+
+interface Persona {
   id: number
-  nombre: string
-  apellidos: string
-  DNI: string
-  telefono: string
-  direccion: string
-  RTN?: string
-  Género?: string
-  tipoCliente: string
-  empresa?: string
+  p_nombre: string
+  s_nombre: string | null
+  p_apellido: string
+  s_apellido: string | null
+  dni: string
+  domicilio: string
+  telefono_1: string
 }
 
 interface Semoviente {
   id: number
-  nombre: string
+  tipo_animal: string
   color: string
-  Tipo_de_semoviente: string
-  Venteado: string
-  observaciones: string
+  venteado: string
+  cv_tipo_semoviente_id: number
 }
 
 interface CartaVentaGanado {
@@ -75,84 +75,79 @@ interface CartaVentaGanado {
 export default function DocumentosPage() {
   const [showForm, setShowForm] = useState(false)
   const [editingCarta, setEditingCarta] = useState<CartaVentaGanado | null>(null)
-  const [selectedVendedor, setSelectedVendedor] = useState<Cliente | null>(null)
-  const [selectedComprador, setSelectedComprador] = useState<Cliente | null>(null)
+  const [selectedVendedor, setSelectedVendedor] = useState<Persona | null>(null)
+  const [selectedComprador, setSelectedComprador] = useState<Persona | null>(null)
   const [selectedSemoviente, setSelectedSemoviente] = useState<Semoviente | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
-  const [cartaSeleccionada, setCartaSeleccionada] = useState<CartaVentaGanado | null>(null)
+  const [cartas, setCartas] = useState<CartaVentaGanado[]>([])
+  const [personas, setPersonas] = useState<Persona[]>([])
+  const [semovientes, setSemovientes] = useState<Semoviente[]>([])
+  const [userName, setUserName] = useState("")
+
+  useEffect(() => {
+    const getUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
+      if (user) {
+        // Si guardaste el nombre en user_metadata al registrarlo:
+        setUserName(user.user_metadata?.nombre || user.email) 
+      }
+    }
+
+    getUser()
+  }, [])
+
+  useEffect(() => {
+    fetchPersonas()
+    fetchSemovientes()
+    fetchCartas()
+  }, [])
+
+  const fetchPersonas = async () => {
+    try {
+      const res = await fetch("/api/clientes")  
+      if (!res.ok) throw new Error("Error al cargar personas")
+      const data = await res.json()
+      setPersonas(data)
+    } catch (err) {
+      console.error(err)
+      setError("No se pudieron cargar las personas")
+    }
+  }
+
+  const fetchSemovientes = async () => {
+    try {
+      const res = await fetch("/api/animales")
+      if (!res.ok) throw new Error("Error al cargar semovientes")
+      const data = await res.json()
+      setSemovientes(data)
+    } catch (err) {
+      console.error(err)
+      setError("No se pudieron cargar los semovientes")
+    }
+  }
+
+  const fetchCartas = async () => {
+    try {
+      const res = await fetch("/api/documentos")
+      if (!res.ok) throw new Error("Error al cargar cartas")
+      const data = await res.json()
+      setCartas(data)
+    } catch (err) {
+      console.error(err)
+      setError("No se pudieron cargar las cartas de venta")
+    }
+  }
 
   const handleLogout = () => {
     console.log("Cerrando sesión...")
     window.location.href = "/login"
   }
-
-  // Datos simulados de clientes
-  const [clientes, setClientes] = useState<Cliente[]>([
-    {
-      id: 1,
-      nombre: "Juan",
-      apellidos: "Pérez",
-      DNI: "0318-2000-54321",
-      telefono: "+504 9990-0000",
-      direccion: "Calle Mayor 123",
-      tipoCliente: "vendedor",
-    },
-    {
-      id: 2,
-      nombre: "María",
-      apellidos: "González",
-      DNI: "0318-1990-00000",
-      telefono: "+504 9999-0000",
-      direccion: "Avenida Principal 456",
-      tipoCliente: "comprador",
-    },
-    {
-      id: 3,
-      nombre: "Carlos",
-      apellidos: "López",
-      DNI: "0318-1985-11111",
-      telefono: "+504 8888-0000",
-      direccion: "Barrio El Centro",
-      tipoCliente: "ambos",
-    },
-  ])
-
-  // Datos simulados de semovientes
-  const [semovientes, setSemovientes] = useState<Semoviente[]>([
-    {
-      id: 1,
-      nombre: "Thunder",
-      color: "Castaño",
-      Tipo_de_semoviente: "Toro",
-      Venteado: "Sí",
-      observaciones: "Animal de competición",
-    },
-    {
-      id: 2,
-      nombre: "Bella",
-      color: "Blanco y Negro",
-      Tipo_de_semoviente: "Vaca",
-      Venteado: "No",
-      observaciones: "Excelente productora de leche",
-    },
-  ])
-
-  const [formData, setFormData] = useState({
-    vendedorId: null as number | null,
-    compradorId: null as number | null,
-    semovienteId: null as number | null,
-    precio: "",
-    fechaSolicitud: format(new Date(), "yyyy-MM-dd"),
-    fechaRegistro: null as string | null,
-    observaciones: "",
-    estado: "borrador" as "borrador" | "confirmado",
-    nombreAbogado: "Carlos Suazo",
-  })
-
-  const [cartas, setCartas] = useState<CartaVentaGanado[]>([])
 
   const generarNumeroRegistro = () => {
     const now = new Date()
@@ -161,12 +156,19 @@ export default function DocumentosPage() {
     const lastId = cartas.filter(c => c.folio === month && c.tomo === year).length
     const nextRegistro = lastId + 1
     return {
-      numeroRegistro: `${year}${String(month).padStart(2, "0")}${String(nextRegistro).padStart(3, "0")}`,
+      numeroRegistro: `${year}${String(month).padStart(2, "0")}${String(nextRegistro).padStart(4, "0")}`,
       tomo: year,
       folio: month,
       registro: nextRegistro,
     }
   }
+
+  const nuevoNumeroRegistro = useMemo(() => {
+    if (editingCarta) {
+      return editingCarta.numeroRegistro; 
+    }
+    return generarNumeroRegistro().numeroRegistro; 
+  }, [editingCarta, cartas]); 
 
   useEffect(() => {
     if (editingCarta) {
@@ -181,8 +183,8 @@ export default function DocumentosPage() {
         estado: editingCarta.estado,
         nombreAbogado: editingCarta.nombreAbogado,
       })
-      const vendedor = clientes.find((c) => c.id === editingCarta.vendedorId) || null
-      const comprador = clientes.find((c) => c.id === editingCarta.compradorId) || null
+      const vendedor = personas.find((p) => p.id === editingCarta.vendedorId) || null
+      const comprador = personas.find((p) => p.id === editingCarta.compradorId) || null
       const semoviente = semovientes.find((s) => s.id === editingCarta.semovienteId) || null
       setSelectedVendedor(vendedor)
       setSelectedComprador(comprador)
@@ -190,7 +192,7 @@ export default function DocumentosPage() {
     } else {
       resetForm()
     }
-  }, [editingCarta, clientes, semovientes])
+  }, [editingCarta, personas, semovientes])
 
   const resetForm = () => {
     setFormData({
@@ -213,6 +215,18 @@ export default function DocumentosPage() {
     setSuccess("")
   }
 
+  const [formData, setFormData] = useState({
+    vendedorId: null as number | null,
+    compradorId: null as number | null,
+    semovienteId: null as number | null,
+    precio: "",
+    fechaSolicitud: format(new Date(), "yyyy-MM-dd"),
+    fechaRegistro: null as string | null,
+    observaciones: "",
+    estado: "borrador" as "borrador" | "confirmado",
+    nombreAbogado: "Carlos Suazo",
+  })
+
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
@@ -222,66 +236,62 @@ export default function DocumentosPage() {
     setIsLoading(true)
     setError("")
     setSuccess("")
+
     if (!formData.vendedorId || !formData.compradorId || !formData.semovienteId || !formData.precio) {
       setError("Por favor, complete todos los campos obligatorios")
       setIsLoading(false)
       return
     }
-    const vendedor = getClienteById(formData.vendedorId)
-    const comprador = getClienteById(formData.compradorId)
+
+    const vendedor = getPersonaById(formData.vendedorId)
+    const comprador = getPersonaById(formData.compradorId)
     const dniRegex = /^\d{4}-\d{4}-\d{5}$/
-    if (vendedor && !dniRegex.test(vendedor.DNI)) {
+
+    if (vendedor && !dniRegex.test(vendedor.dni)) {
       setError("El DNI del vendedor no tiene un formato válido (0000-0000-00000)")
       setIsLoading(false)
       return
     }
-    if (comprador && !dniRegex.test(comprador.DNI)) {
+
+    if (comprador && !dniRegex.test(comprador.dni)) {
       setError("El DNI del comprador no tiene un formato válido (0000-0000-00000)")
       setIsLoading(false)
       return
     }
+
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-      let cartaActualizada: CartaVentaGanado
-      if (editingCarta && editingCarta.estado === "borrador") {
-        cartaActualizada = {
-          ...editingCarta,
-          vendedorId: formData.vendedorId,
-          compradorId: formData.compradorId,
-          semovienteId: formData.semovienteId,
-          precio: formData.precio,
-          fechaSolicitud: formData.fechaSolicitud,
-          observaciones: formData.observaciones,
-          nombreAbogado: formData.nombreAbogado,
-        }
-      } else {
-        const { numeroRegistro, tomo, folio, registro } = generarNumeroRegistro()
-        cartaActualizada = {
-          id: Date.now().toString(),
-          numeroRegistro,
-          tomo,
-          folio,
-          registro,
-          vendedorId: formData.vendedorId,
-          compradorId: formData.compradorId,
-          semovienteId: formData.semovienteId,
-          precio: formData.precio,
-          fechaSolicitud: formData.fechaSolicitud,
-          fechaRegistro: formData.estado === "confirmado" ? format(new Date(), "yyyy-MM-dd HH:mm:ss") : null,
-          estado: formData.estado,
-          observaciones: formData.observaciones,
-          nombreAbogado: formData.nombreAbogado,
-        }
+      const payload = {
+        vendedorId: formData.vendedorId,
+        compradorId: formData.compradorId,
+        semovienteId: formData.semovienteId,
+        precio: formData.precio,
+        fechaSolicitud: formData.fechaSolicitud,
+        observaciones: formData.observaciones,
+        estado: formData.estado,
+        nombreAbogado: formData.nombreAbogado,
       }
+
+      const url = editingCarta ? "/api/documentos" : "/api/documentos"
+      const method = editingCarta ? "PUT" : "POST"
+
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
+
+      if (!res.ok) throw new Error("Error en la respuesta del servidor")
+
+      const cartaGuardada = await res.json()
+
       if (editingCarta) {
-        setCartas((prev) =>
-          prev.map((carta) => (carta.id === editingCarta.id ? cartaActualizada : carta))
-        )
+        setCartas(prev => prev.map(c => c.id === editingCarta.id ? cartaGuardada : c))
         setSuccess("Carta actualizada correctamente")
       } else {
-        setCartas((prev) => [cartaActualizada, ...prev])
+        setCartas(prev => [cartaGuardada, ...prev])
         setSuccess("Carta de venta creada correctamente")
       }
+
       resetForm()
     } catch (err: any) {
       setError(err.message || "Error al guardar la carta. Inténtelo de nuevo.")
@@ -295,41 +305,40 @@ export default function DocumentosPage() {
       setError("Complete todos los campos obligatorios antes de confirmar")
       return
     }
+
     if (!window.confirm("¿Está seguro de confirmar esta carta? No podrá editarse después.")) {
       return
     }
+
     setIsLoading(true)
     setError("")
     setSuccess("")
+
     try {
-      const now = new Date()
-      const { numeroRegistro, tomo, folio, registro } = generarNumeroRegistro()
-      const cartaConfirmada: CartaVentaGanado = {
-        id: editingCarta?.id || Date.now().toString(),
-        numeroRegistro: editingCarta?.numeroRegistro || numeroRegistro,
-        tomo: editingCarta?.tomo || tomo,
-        folio: editingCarta?.folio || folio,
-        registro: editingCarta?.registro || registro,
+      const payload = {
         vendedorId: formData.vendedorId,
         compradorId: formData.compradorId,
         semovienteId: formData.semovienteId,
         precio: formData.precio,
         fechaSolicitud: formData.fechaSolicitud,
-        fechaRegistro: format(now, "yyyy-MM-dd HH:mm:ss"),
-        estado: "confirmado",
         observaciones: formData.observaciones,
+        estado: "confirmado",
         nombreAbogado: formData.nombreAbogado,
       }
-      if (editingCarta) {
-        setCartas((prev) =>
-          prev.map((carta) => (carta.id === editingCarta.id ? cartaConfirmada : carta))
-        )
-      } else {
-        setCartas((prev) => [cartaConfirmada, ...prev])
-      }
-      setSuccess("Carta confirmada correctamente")
-      setEditingCarta(cartaConfirmada)
-      setFormData((prev) => ({ ...prev, estado: "confirmado", fechaRegistro: cartaConfirmada.fechaRegistro }))
+
+      const res = await fetch("/api/documentos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
+
+      if (!res.ok) throw new Error("Error al confirmar la carta")
+
+      const cartaConfirmada = await res.json()
+      setCartas(prev => [cartaConfirmada, ...prev])
+      setEditingCarta(cartaConfirmada)  
+      setFormData(prev => ({ ...prev, estado: "confirmado" })) 
+      setSuccess("Carta confirmada correctamente. Ahora puede exportarla como PDF.")
     } catch (err) {
       setError("Error al confirmar la carta. Inténtelo de nuevo.")
     } finally {
@@ -346,13 +355,19 @@ export default function DocumentosPage() {
     setShowForm(true)
   }
 
-  const handleDelete = (id: string) => {
-    if (confirm("¿Está seguro de que desea eliminar esta carta?")) {
-      setCartas((prev) => prev.filter((carta) => carta.id !== id))
+  const handleDelete = async (id: string) => {
+    if (!confirm("¿Está seguro de que desea eliminar esta carta?")) return
+
+    try {
+      const res = await fetch(`/api/documentos?id=${id}`, { method: "DELETE" })
+      if (!res.ok) throw new Error("Error al eliminar")
+
+      setCartas(prev => prev.filter(c => c.id !== id))
       setSuccess("Carta eliminada correctamente")
-      if (editingCarta?.id === id) {
-        resetForm()
-      }
+
+      if (editingCarta?.id === id) resetForm()
+    } catch {
+      setError("Error al eliminar la carta")
     }
   }
 
@@ -362,12 +377,12 @@ export default function DocumentosPage() {
       return
     }
     alert(`Imprimiendo Carta de Venta #${carta.numeroRegistro}`)
-    console.log("Imprimiendo carta confirmada:", carta)
   }
 
   function numeroALetras(numStr: string): string {
     const num = parseFloat(numStr)
     if (isNaN(num)) return "Cero"
+
     const unidades = [
       "", "un", "dos", "tres", "cuatro", "cinco", "seis", "siete", "ocho", "nueve", "diez",
       "once", "doce", "trece", "catorce", "quince", "dieciséis", "diecisiete", "dieciocho", "diecinueve",
@@ -378,6 +393,7 @@ export default function DocumentosPage() {
     const centenas = [
       "", "ciento", "doscientos", "trescientos", "cuatrocientos", "quinientos", "seiscientos", "setecientos", "ochocientos", "novecientos",
     ]
+
     function convertir(num: number): string {
       if (num === 0) return ""
       if (num < 20) return unidades[num]
@@ -405,8 +421,10 @@ export default function DocumentosPage() {
       }
       return "Número demasiado grande"
     }
+
     const enteros = Math.floor(num)
     const decimales = Math.round((num - enteros) * 100)
+
     let resultado = ""
     if (enteros === 0) {
       resultado = "cero"
@@ -417,354 +435,395 @@ export default function DocumentosPage() {
         resultado = convertir(enteros)
       }
     }
+
     if (enteros > 1) resultado += " lempiras"
     else if (enteros === 1) resultado += " lempira"
+
     return `${resultado.toUpperCase()} (${num.toFixed(2)})`
   }
 
   const handleExportPDF = () => {
     if (!selectedVendedor || !selectedComprador || !selectedSemoviente || !formData.precio) {
-      alert("Complete todos los campos antes de exportar");
-      return;
+      alert("Complete todos los campos antes de exportar")
+      return
     }
+
     const doc = new jsPDF({
-        orientation: "portrait",
-        unit: "mm",
-        format: "a4",
-    });
-    const logoPath = "/logo1.png";
-    const selloPath = "/logo1.png";
-    const loadImage = (src) => {
-        return new Promise((resolve, reject) => {
-            const img = new Image();
-            img.onload = () => resolve(img);
-            img.onerror = () => reject(new Error(`No se pudo cargar la imagen: ${src}`));
-            img.src = src;
-        });
-    };
+      orientation: "portrait",
+      unit: "mm",
+      format: "a4",
+    })
+
+    const logoPath = "/logo1.png"
+    const selloPath = "/logo1.png"
+
+    const loadImage = (src: string) => {
+      return new Promise((resolve, reject) => {
+        const img = new Image()
+        img.onload = () => resolve(img)
+        img.onerror = () => reject(new Error(`No se pudo cargar la imagen: ${src}`))
+        img.src = src
+      })
+    }
+
     const addParagraph = (
-        doc,
-        text,
-        x,
-        y,
-        maxWidth,
-        lineHeight,
-        highlightWords = []
+      doc: any,
+      text: string,
+      x: number,
+      y: number,
+      maxWidth: number,
+      lineHeight: number,
+      highlightWords: string[] = []
     ) => {
-        const lines = doc.splitTextToSize(text, maxWidth);
-        lines.forEach((line) => {
-            let currentX = x;
-            const words = line.split(" ");
-            words.forEach((word) => {
-                const cleanWord = word.replace(/[.,;:()\-]/g, "").toUpperCase();
-                const isBold = highlightWords.some((hw) => {
-                    const cleanHw = hw.replace(/[.,;:()\-]/g, "").toUpperCase();
-                    return cleanWord === cleanHw;
-                });
-                if (isBold) {
-                    doc.setFont("Montserrat-Bold", "normal");
-                } else {
-                    doc.setFont("Roboto-Light", "normal");
-                }
-                doc.text(word + " ", currentX, y);
-                currentX += doc.getTextWidth(word + " ");
-            });
-            y += lineHeight;
-        });
-        return y;
-    };
+      const lines = doc.splitTextToSize(text, maxWidth)
+      lines.forEach((line: string) => {
+        let currentX = x
+        const words = line.split(" ")
+        words.forEach((word) => {
+          const cleanWord = word.replace(/[.,;:()\-]/g, "").toUpperCase()
+          const isBold = highlightWords.some((hw) => {
+            const cleanHw = hw.replace(/[.,;:()\-]/g, "").toUpperCase()
+            return cleanWord === cleanHw
+          })
+          if (isBold) {
+            doc.setFont("Montserrat-Bold", "normal")
+          } else {
+            doc.setFont("Roboto-Light", "normal")
+          }
+          doc.text(word + " ", currentX, y)
+          currentX += doc.getTextWidth(word + " ")
+        })
+        y += lineHeight
+      })
+      return y
+    }
 
     Promise.all([loadImage(logoPath), loadImage(selloPath)])
-        .then(([logoImg, selloImg]) => {
-            const pageWidth = doc.internal.pageSize.getWidth();
-            const margin = 10;
-            const contentWidth = pageWidth - margin * 2;
-            let y = 20;
-            const lineHeight = 5.8;
-            doc.setDrawColor(0);
-            doc.setLineWidth(0.3);
-            doc.rect(margin - 2, 8, contentWidth + 4, 270);
-            doc.addImage(logoImg, "PNG", margin, 10, 25, 25);
-            doc.addImage(selloImg, "PNG", pageWidth - margin - 25, 10, 25, 25);
-            doc.setFont("Montserrat-Bold", "normal");
-            doc.setFontSize(12);
-            doc.text("Municipalidad de la Villa de San Antonio", pageWidth / 2, y, { align: "center" });
-            y += 6;
-            doc.setFontSize(11);
-            doc.text("Departamento de Comayagua", pageWidth / 2, y, { align: "center" });
-            y += 6;
-            doc.text("Tel: 2784-1217", pageWidth / 2, y, { align: "center" });
-            y += 12;
-            doc.setFontSize(14);
-            doc.text("CARTA DE VENTA", pageWidth / 2, y, { align: "center" });
-            y += 10;
-            doc.setFont("Roboto-Light", "normal");
-            doc.setFontSize(10);
-            const maxWidth = contentWidth - 10;
-            const montoEnLetras = numeroALetras(formData.precio).toUpperCase().trim();
-            const precioNumerico = Number(formData.precio).toFixed(2);
-            const highlightWords = [
-                ...selectedVendedor.nombre.split(" ").map(word => word.toUpperCase()),
-                ...selectedVendedor.apellidos.split(" ").map(word => word.toUpperCase()),
-                ...selectedComprador.nombre.split(" ").map(word => word.toUpperCase()),
-                ...selectedComprador.apellidos.split(" ").map(word => word.toUpperCase()),
-                selectedVendedor.DNI.replace(/[^0-9A-Z]/g, "").toUpperCase(),
-                selectedComprador.DNI.replace(/[^0-9A-Z]/g, "").toUpperCase(),
-                selectedVendedor.telefono.replace(/[^0-9]/g, "").toUpperCase(), 
-                ...montoEnLetras.split(" "),
-            ].filter(word => word !== "Y"); 
-            const textoVendedor = `El señor(a) ${selectedVendedor.nombre} ${selectedVendedor.apellidos}, hondureño(a), mayor de edad, identificado(a) con DNI número ${selectedVendedor.DNI}, con domicilio en ${selectedVendedor.direccion} con teléfono ${selectedVendedor.telefono}, en pleno uso de sus facultades, declara la venta del semoviente descrito en este documento.`;
-            const textoComprador = `El comprador(a) ${selectedComprador.nombre} ${selectedComprador.apellidos}, hondureño(a), mayor de edad, identificado(a) con DNI número ${selectedComprador.DNI}, acepta la adquisición del semoviente en las condiciones aquí establecidas.`;
-            const textoPrecio = `El semoviente vendido es de color ${selectedSemoviente.color}, herrado y marcado con el fierro que se muestra en el reverso. Se entrega en buen estado, por un valor de ${montoEnLetras}, suma que el vendedor declara haber recibido a satisfacción.`;
-            const textoFierro = `El animal es de raza criolla y se encuentra identificado con la marca de fierro registrada en el reverso del presente documento.`;
-            const notaFinal = `Esta carta de venta es válida únicamente en su versión original. Cualquier alteración o modificación la invalida de inmediato.`;
-            const fechaEsp = format(new Date(formData.fechaSolicitud), "d 'de' MMMM 'del' yyyy", {
-                locale: es,
-            });
-            const textoFecha = `Firmado en la ciudad de la Villa de San Antonio, Comayagua, a los ${fechaEsp}.`;
-            y = addParagraph(doc, textoVendedor, margin, y, maxWidth, lineHeight, highlightWords);
-            y += 1;
-            y = addParagraph(doc, textoComprador, margin, y, maxWidth, lineHeight, highlightWords);
-            y += 1;
-            y = addParagraph(doc, textoPrecio, margin, y, maxWidth, lineHeight, highlightWords);
-            y += 1;
-            doc.setFont("Montserrat-Bold", "normal");
-            y = addParagraph(doc, textoFierro, margin, y, maxWidth, lineHeight, []);
-            doc.setFont("Roboto-Light", "normal");
-            doc.rect(pageWidth - 60, y - 6, 50, 20);
-            y += lineHeight * 3;
-            doc.setFontSize(9);
-            y = addParagraph(doc, notaFinal, margin, y, maxWidth, lineHeight - 0.5);
-            y += lineHeight * 2;
-            doc.setFontSize(10);
-            y = addParagraph(doc, textoFecha, margin, y, maxWidth, lineHeight);
-            y += lineHeight * 2;
-            const tableX = pageWidth - margin - 50;
-            const tableY = y;
-            const boxWidth = 25;
-            const boxHeight = 8;
-            doc.setFontSize(9);
-            doc.setFont("Montserrat-Bold", "normal");
-            doc.text("TOMO:", tableX - 20, tableY + 6);
-            doc.text("FOLIO:", tableX - 20, tableY + boxHeight + 6);
-            doc.text("REGISTRO:", tableX - 20, tableY + boxHeight * 2 + 6);
-            doc.setFont("Roboto-Light", "normal");
-            const tomo = new Date().getFullYear();
-            const folio = new Date().getMonth() + 1;
-            const registro = String(
-                cartas.filter((c) => c.folio === folio && c.tomo === tomo).length + 1
-            ).padStart(3, "0");
-            doc.text(String(tomo), tableX + 7, tableY + 6);
-            doc.text(String(folio), tableX + 7, tableY + boxHeight + 6);
-            doc.text(registro, tableX + 7, tableY + boxHeight * 2 + 6);
-            doc.rect(tableX, tableY, boxWidth, boxHeight);
-            doc.rect(tableX, tableY + boxHeight, boxWidth, boxHeight);
-            doc.rect(tableX, tableY + boxHeight * 2, boxWidth, boxHeight);
-            y += boxHeight * 3 + 10;
-            doc.setFont("Montserrat-Bold", "normal");
-            doc.line(15, y, 90, y);
-            y += 5;
-            doc.text("FIRMA DEL VENDEDOR", 15, y);
-            y += 15;
-            doc.line(15, y, 90, y);
-            y += 5;
-            doc.text("SELLO Y FIRMA ABOG. " + formData.nombreAbogado.toUpperCase(), 15, y);
-            y += 10;
-            doc.text("DIRECTOR DE JUSTICIA MUNICIPAL", 15, y);
-            const fileName = `CartaVenta_${editingCarta?.numeroRegistro || generarNumeroRegistro().numeroRegistro}.pdf`;
-            doc.save(fileName);
-        })
-        .catch((err) => {
-            alert("Error al cargar imágenes para el PDF: " + err.message);
-            console.error(err);
-        });
+      .then(([logoImg, selloImg]) => {
+        const pageWidth = doc.internal.pageSize.getWidth()
+        const margin = 10
+        const contentWidth = pageWidth - margin * 2
+        let y = 20
+        const lineHeight = 5.8
+
+        doc.setDrawColor(0)
+        doc.setLineWidth(0.3)
+        doc.rect(margin - 2, 8, contentWidth + 4, 270)
+
+        doc.addImage(logoImg as HTMLImageElement, "PNG", margin, 10, 25, 25)
+        doc.addImage(selloImg as HTMLImageElement, "PNG", pageWidth - margin - 25, 10, 25, 25)
+
+        doc.setFont("Montserrat-Bold", "normal")
+        doc.setFontSize(12)
+        doc.text("Municipalidad de la Villa de San Antonio", pageWidth / 2, y, { align: "center" })
+        y += 6
+        doc.setFontSize(11)
+        doc.text("Departamento de Comayagua", pageWidth / 2, y, { align: "center" })
+        y += 6
+        doc.text("Tel: 2784-1217", pageWidth / 2, y, { align: "center" })
+        y += 12
+
+        doc.setFontSize(14)
+        doc.text("CARTA DE VENTA", pageWidth / 2, y, { align: "center" })
+        y += 10
+
+        doc.setFont("Roboto-Light", "normal")
+        doc.setFontSize(10)
+        const maxWidth = contentWidth - 10
+
+        const nombreVendedor = `${selectedVendedor.p_nombre} ${selectedVendedor.s_nombre || ""} ${selectedVendedor.p_apellido} ${selectedVendedor.s_apellido || ""}`.trim()
+        const nombreComprador = `${selectedComprador.p_nombre} ${selectedComprador.s_nombre || ""} ${selectedComprador.p_apellido} ${selectedComprador.s_apellido || ""}`.trim()
+        const montoEnLetras = numeroALetras(formData.precio).toUpperCase().trim()
+
+        const highlightWords = [
+          ...nombreVendedor.split(" ").map(w => w.toUpperCase()),
+          ...nombreComprador.split(" ").map(w => w.toUpperCase()),
+          selectedVendedor.dni.replace(/[^0-9A-Z]/g, "").toUpperCase(),
+          selectedComprador.dni.replace(/[^0-9A-Z]/g, "").toUpperCase(),
+          selectedVendedor.telefono_1.replace(/[^0-9]/g, "").toUpperCase(),
+          ...montoEnLetras.split(" "),
+        ].filter(word => word !== "Y")
+
+        const textoVendedor = `El señor(a) ${nombreVendedor}, hondureño(a), mayor de edad, identificado(a) con DNI número ${selectedVendedor.dni}, con domicilio en ${selectedVendedor.domicilio} con teléfono ${selectedVendedor.telefono_1}, en pleno uso de sus facultades, declara la venta del semoviente descrito en este documento.`
+        const textoComprador = `El comprador(a) ${nombreComprador}, hondureño(a), mayor de edad, identificado(a) con DNI número ${selectedComprador.dni}, acepta la adquisición del semoviente en las condiciones aquí establecidas.`
+        const textoPrecio = `El semoviente vendido es de color ${selectedSemoviente.color}, herrado y marcado con el fierro que se muestra en el reverso. Se entrega en buen estado, por un valor de ${montoEnLetras}, suma que el vendedor declara haber recibido a satisfacción.`
+        const textoFierro = `El animal es de raza criolla y se encuentra identificado con la marca de fierro registrada en el reverso del presente documento.`
+        const notaFinal = `Esta carta de venta es válida únicamente en su versión original. Cualquier alteración o modificación la invalida de inmediato.`
+        const fechaEsp = format(new Date(formData.fechaSolicitud), "d 'de' MMMM 'del' yyyy", { locale: es })
+        const textoFecha = `Firmado en la ciudad de la Villa de San Antonio, Comayagua, a los ${fechaEsp}.`
+
+        y = addParagraph(doc, textoVendedor, margin, y, maxWidth, lineHeight, highlightWords)
+        y += 1
+        y = addParagraph(doc, textoComprador, margin, y, maxWidth, lineHeight, highlightWords)
+        y += 1
+        y = addParagraph(doc, textoPrecio, margin, y, maxWidth, lineHeight, highlightWords)
+        y += 1
+
+        doc.setFont("Montserrat-Bold", "normal")
+        y = addParagraph(doc, textoFierro, margin, y, maxWidth, lineHeight, [])
+        doc.setFont("Roboto-Light", "normal")
+
+        doc.rect(pageWidth - 60, y - 6, 50, 20)
+        y += lineHeight * 3
+
+        doc.setFontSize(9)
+        y = addParagraph(doc, notaFinal, margin, y, maxWidth, lineHeight - 0.5)
+        y += lineHeight * 2
+
+        doc.setFontSize(10)
+        y = addParagraph(doc, textoFecha, margin, y, maxWidth, lineHeight)
+        y += lineHeight * 2
+
+        const tableX = pageWidth - margin - 50
+        const tableY = y
+        const boxWidth = 25
+        const boxHeight = 8
+
+        doc.setFontSize(9)
+        doc.setFont("Montserrat-Bold", "normal")
+        doc.text("TOMO:", tableX - 20, tableY + 6)
+        doc.text("FOLIO:", tableX - 20, tableY + boxHeight + 6)
+        doc.text("REGISTRO:", tableX - 20, tableY + boxHeight * 2 + 6)
+        doc.setFont("Roboto-Light", "normal")
+
+        const correlativo = editingCarta?.numeroRegistro || generarNumeroRegistro().numeroRegistro || "2025090001"
+        const tomo = editingCarta?.tomo || new Date().getFullYear()
+        const folio = editingCarta?.folio || new Date().getMonth() + 1
+        const registro = correlativo.slice(-4).padStart(4, "0")
+
+        doc.text(String(tomo), tableX + 7, tableY + 6)
+        doc.text(String(folio), tableX + 7, tableY + boxHeight + 6)
+        doc.text(registro, tableX + 7, tableY + boxHeight * 2 + 6)
+
+        doc.rect(tableX, tableY, boxWidth, boxHeight)
+        doc.rect(tableX, tableY + boxHeight, boxWidth, boxHeight)
+        doc.rect(tableX, tableY + boxHeight * 2, boxWidth, boxHeight)
+
+        y += boxHeight * 3 + 10
+
+        doc.setFont("Montserrat-Bold", "normal")
+        doc.line(15, y, 90, y)
+        y += 5
+        doc.text("FIRMA DEL VENDEDOR", 15, y)
+        y += 15
+        doc.line(15, y, 90, y)
+        y += 5
+        doc.text("SELLO Y FIRMA ABOG. " + formData.nombreAbogado.toUpperCase(), 15, y)
+        y += 10
+        doc.text("DIRECTOR DE JUSTICIA MUNICIPAL", 15, y)
+
+        const fileName = `CartaVenta_${correlativo}.pdf`
+        doc.save(fileName)
+      })
+      .catch((err) => {
+        alert("Error al cargar imágenes para el PDF: " + err.message)
+        console.error(err)
+      })
   }
+
   const handleReExportPDF = (carta: CartaVentaGanado) => {
     if (carta.estado !== "confirmado") {
-      alert("Solo se pueden volver a exportar cartas confirmadas");
-      return;
+      alert("Solo se pueden volver a exportar cartas confirmadas")
+      return
     }
 
-    const vendedor = getClienteById(carta.vendedorId);
-    const comprador = getClienteById(carta.compradorId);
-    const semoviente = getSemovienteById(carta.semovienteId);
+    const vendedor = getPersonaById(carta.vendedorId)
+    const comprador = getPersonaById(carta.compradorId)
+    const semoviente = getSemovienteById(carta.semovienteId)
 
     if (!vendedor || !comprador || !semoviente) {
-      alert("No se pudieron cargar los datos del documento para re-exportar.");
-      return;
+      alert("No se pudieron cargar los datos del documento para re-exportar.")
+      return
     }
 
     const doc = new jsPDF({
-        orientation: "portrait",
-        unit: "mm",
-        format: "a4",
-    });
-    const logoPath = "/logo1.png";
-    const selloPath = "/logo1.png";
-    const loadImage = (src) => {
-        return new Promise((resolve, reject) => {
-            const img = new Image();
-            img.onload = () => resolve(img);
-            img.onerror = () => reject(new Error(`No se pudo cargar la imagen: ${src}`));
-            img.src = src;
-        });
-    };
+      orientation: "portrait",
+      unit: "mm",
+      format: "a4",
+    })
+
+    const logoPath = "/logo1.png"
+    const selloPath = "/logo1.png"
+
+    const loadImage = (src: string) => {
+      return new Promise((resolve, reject) => {
+        const img = new Image()
+        img.onload = () => resolve(img)
+        img.onerror = () => reject(new Error(`No se pudo cargar la imagen: ${src}`))
+        img.src = src
+      })
+    }
+
     const addParagraph = (
-        doc,
-        text,
-        x,
-        y,
-        maxWidth,
-        lineHeight,
-        highlightWords = []
+      doc: any,
+      text: string,
+      x: number,
+      y: number,
+      maxWidth: number,
+      lineHeight: number,
+      highlightWords: string[] = []
     ) => {
-        const lines = doc.splitTextToSize(text, maxWidth);
-        lines.forEach((line) => {
-            let currentX = x;
-            const words = line.split(" ");
-            words.forEach((word) => {
-                const cleanWord = word.replace(/[.,;:()\-]/g, "").toUpperCase();
-                const isBold = highlightWords.some((hw) => {
-                    const cleanHw = hw.replace(/[.,;:()\-]/g, "").toUpperCase();
-                    return cleanWord === cleanHw;
-                });
-                if (isBold) {
-                    doc.setFont("Montserrat-Bold", "normal");
-                } else {
-                    doc.setFont("Roboto-Light", "normal");
-                }
-                doc.text(word + " ", currentX, y);
-                currentX += doc.getTextWidth(word + " ");
-            });
-            y += lineHeight;
-        });
-        return y;
-    };
+      const lines = doc.splitTextToSize(text, maxWidth)
+      lines.forEach((line: string) => {
+        let currentX = x
+        const words = line.split(" ")
+        words.forEach((word) => {
+          const cleanWord = word.replace(/[.,;:()\-]/g, "").toUpperCase()
+          const isBold = highlightWords.some((hw) => {
+            const cleanHw = hw.replace(/[.,;:()\-]/g, "").toUpperCase()
+            return cleanWord === cleanHw
+          })
+          if (isBold) {
+            doc.setFont("Montserrat-Bold", "normal")
+          } else {
+            doc.setFont("Roboto-Light", "normal")
+          }
+          doc.text(word + " ", currentX, y)
+          currentX += doc.getTextWidth(word + " ")
+        })
+        y += lineHeight
+      })
+      return y
+    }
 
     Promise.all([loadImage(logoPath), loadImage(selloPath)])
-        .then(([logoImg, selloImg]) => {
-            const pageWidth = doc.internal.pageSize.getWidth();
-            const margin = 10;
-            const contentWidth = pageWidth - margin * 2;
-            let y = 20;
-            const lineHeight = 5.8;
-            doc.setDrawColor(0);
-            doc.setLineWidth(0.3);
-            doc.rect(margin - 2, 8, contentWidth + 4, 270);
-            doc.addImage(logoImg, "PNG", margin, 10, 25, 25);
-            doc.addImage(selloImg, "PNG", pageWidth - margin - 25, 10, 25, 25);
-            doc.setFont("Montserrat-Bold", "normal");
-            doc.setFontSize(12);
-            doc.text("Municipalidad de la Villa de San Antonio", pageWidth / 2, y, { align: "center" });
-            y += 6;
-            doc.setFontSize(11);
-            doc.text("Departamento de Comayagua", pageWidth / 2, y, { align: "center" });
-            y += 6;
-            doc.text("Tel: 2784-1217", pageWidth / 2, y, { align: "center" });
-            y += 12;
-            doc.setFontSize(14);
-            doc.text("CARTA DE VENTA", pageWidth / 2, y, { align: "center" });
-            y += 10;
-            doc.setFont("Roboto-Light", "normal");
-            doc.setFontSize(10);
-            const maxWidth = contentWidth - 10;
-            const montoEnLetras = numeroALetras(carta.precio).toUpperCase().trim();
-            const highlightWords = [
-                ...vendedor.nombre.split(" ").map(word => word.toUpperCase()),
-                ...vendedor.apellidos.split(" ").map(word => word.toUpperCase()),
-                ...comprador.nombre.split(" ").map(word => word.toUpperCase()),
-                ...comprador.apellidos.split(" ").map(word => word.toUpperCase()),
-                vendedor.DNI.replace(/[^0-9A-Z]/g, "").toUpperCase(),
-                comprador.DNI.replace(/[^0-9A-Z]/g, "").toUpperCase(),
-                vendedor.telefono.replace(/[^0-9]/g, "").toUpperCase(),
-                ...montoEnLetras.split(" "),
-            ].filter(word => word !== "Y");
+      .then(([logoImg, selloImg]) => {
+        const pageWidth = doc.internal.pageSize.getWidth()
+        const margin = 10
+        const contentWidth = pageWidth - margin * 2
+        let y = 20
+        const lineHeight = 5.8
 
-            const textoVendedor = `El señor(a) ${vendedor.nombre} ${vendedor.apellidos}, hondureño(a), mayor de edad, identificado(a) con DNI número ${vendedor.DNI}, con domicilio en ${vendedor.direccion} con teléfono ${vendedor.telefono}, en pleno uso de sus facultades, declara la venta del semoviente descrito en este documento.`;
-            const textoComprador = `El comprador(a) ${comprador.nombre} ${comprador.apellidos}, hondureño(a), mayor de edad, identificado(a) con DNI número ${comprador.DNI}, acepta la adquisición del semoviente en las condiciones aquí establecidas.`;
-            const textoPrecio = `El semoviente vendido es de color ${semoviente.color}, herrado y marcado con el fierro que se muestra en el reverso. Se entrega en buen estado, por un valor de ${montoEnLetras}, suma que el vendedor declara haber recibido a satisfacción.`;
-            const textoFierro = `El animal es de raza criolla y se encuentra identificado con la marca de fierro registrada en el reverso del presente documento.`;
-            const notaFinal = `Esta carta de venta es válida únicamente en su versión original. Cualquier alteración o modificación la invalida de inmediato.`;
-            const fechaEsp = format(new Date(carta.fechaSolicitud), "d 'de' MMMM 'del' yyyy", {
-                locale: es,
-            });
-            const textoFecha = `Firmado en la ciudad de la Villa de San Antonio, Comayagua, a los ${fechaEsp}.`;
+        doc.setDrawColor(0)
+        doc.setLineWidth(0.3)
+        doc.rect(margin - 2, 8, contentWidth + 4, 270)
 
-            y = addParagraph(doc, textoVendedor, margin, y, maxWidth, lineHeight, highlightWords);
-            y += 1;
-            y = addParagraph(doc, textoComprador, margin, y, maxWidth, lineHeight, highlightWords);
-            y += 1;
-            y = addParagraph(doc, textoPrecio, margin, y, maxWidth, lineHeight, highlightWords);
-            y += 1;
-            doc.setFont("Montserrat-Bold", "normal");
-            y = addParagraph(doc, textoFierro, margin, y, maxWidth, lineHeight, []);
-            doc.setFont("Roboto-Light", "normal");
-            doc.rect(pageWidth - 60, y - 6, 50, 20);
-            y += lineHeight * 3;
-            doc.setFontSize(9);
-            y = addParagraph(doc, notaFinal, margin, y, maxWidth, lineHeight - 0.5);
-            y += lineHeight * 2;
-            doc.setFontSize(10);
-            y = addParagraph(doc, textoFecha, margin, y, maxWidth, lineHeight);
-            y += lineHeight * 2;
-            const tableX = pageWidth - margin - 50;
-            const tableY = y;
-            const boxWidth = 25;
-            const boxHeight = 8;
-            doc.setFontSize(9);
-            doc.setFont("Montserrat-Bold", "normal");
-            doc.text("TOMO:", tableX - 20, tableY + 6);
-            doc.text("FOLIO:", tableX - 20, tableY + boxHeight + 6);
-            doc.text("REGISTRO:", tableX - 20, tableY + boxHeight * 2 + 6);
-            doc.setFont("Roboto-Light", "normal");
-            const tomo = carta.tomo;
-            const folio = carta.folio;
-            const registro = String(carta.registro).padStart(3, "0");
-            doc.text(String(tomo), tableX + 7, tableY + 6);
-            doc.text(String(folio), tableX + 7, tableY + boxHeight + 6);
-            doc.text(registro, tableX + 7, tableY + boxHeight * 2 + 6);
-            doc.rect(tableX, tableY, boxWidth, boxHeight);
-            doc.rect(tableX, tableY + boxHeight, boxWidth, boxHeight);
-            doc.rect(tableX, tableY + boxHeight * 2, boxWidth, boxHeight);
-            y += boxHeight * 3 + 10;
-            doc.setFont("Montserrat-Bold", "normal");
-            doc.line(15, y, 90, y);
-            y += 5;
-            doc.text("FIRMA DEL VENDEDOR", 15, y);
-            y += 15;
-            doc.line(15, y, 90, y);
-            y += 5;
-            doc.text("SELLO Y FIRMA ABOG. " + carta.nombreAbogado.toUpperCase(), 15, y);
-            y += 10;
-            doc.text("DIRECTOR DE JUSTICIA MUNICIPAL", 15, y);
+        doc.addImage(logoImg as HTMLImageElement, "PNG", margin, 10, 25, 25)
+        doc.addImage(selloImg as HTMLImageElement, "PNG", pageWidth - margin - 25, 10, 25, 25)
 
-            const fileName = `CartaVenta_${carta.numeroRegistro}.pdf`;
-            doc.save(fileName);
-        })
-        .catch((err) => {
-            alert("Error al cargar imágenes para el PDF: " + err.message);
-            console.error(err);
-        });
-  };
+        doc.setFont("Montserrat-Bold", "normal")
+        doc.setFontSize(12)
+        doc.text("Municipalidad de la Villa de San Antonio", pageWidth / 2, y, { align: "center" })
+        y += 6
+        doc.setFontSize(11)
+        doc.text("Departamento de Comayagua", pageWidth / 2, y, { align: "center" })
+        y += 6
+        doc.text("Tel: 2784-1217", pageWidth / 2, y, { align: "center" })
+        y += 12
+
+        doc.setFontSize(14)
+        doc.text("CARTA DE VENTA", pageWidth / 2, y, { align: "center" })
+        y += 10
+
+        doc.setFont("Roboto-Light", "normal")
+        doc.setFontSize(10)
+        const maxWidth = contentWidth - 10
+
+        const nombreVendedor = `${vendedor.p_nombre} ${vendedor.s_nombre || ""} ${vendedor.p_apellido} ${vendedor.s_apellido || ""}`.trim()
+        const nombreComprador = `${comprador.p_nombre} ${comprador.s_nombre || ""} ${comprador.p_apellido} ${comprador.s_apellido || ""}`.trim()
+        const montoEnLetras = numeroALetras(carta.precio).toUpperCase().trim()
+
+        const highlightWords = [
+          ...nombreVendedor.split(" ").map(w => w.toUpperCase()),
+          ...nombreComprador.split(" ").map(w => w.toUpperCase()),
+          vendedor.dni.replace(/[^0-9A-Z]/g, "").toUpperCase(),
+          comprador.dni.replace(/[^0-9A-Z]/g, "").toUpperCase(),
+          vendedor.telefono_1.replace(/[^0-9]/g, "").toUpperCase(),
+          ...montoEnLetras.split(" "),
+        ].filter(word => word !== "Y")
+
+        const textoVendedor = `El señor(a) ${nombreVendedor}, hondureño(a), mayor de edad, identificado(a) con DNI número ${vendedor.dni}, con domicilio en ${vendedor.domicilio} con teléfono ${vendedor.telefono_1}, en pleno uso de sus facultades, declara la venta del semoviente descrito en este documento.`
+        const textoComprador = `El comprador(a) ${nombreComprador}, hondureño(a), mayor de edad, identificado(a) con DNI número ${comprador.dni}, acepta la adquisición del semoviente en las condiciones aquí establecidas.`
+        const textoPrecio = `El semoviente vendido es de color ${semoviente.color}, herrado y marcado con el fierro que se muestra en el reverso. Se entrega en buen estado, por un valor de ${montoEnLetras}, suma que el vendedor declara haber recibido a satisfacción.`
+        const textoFierro = `El animal es de raza criolla y se encuentra identificado con la marca de fierro registrada en el reverso del presente documento.`
+        const notaFinal = `Esta carta de venta es válida únicamente en su versión original. Cualquier alteración o modificación la invalida de inmediato.`
+        const fechaEsp = format(new Date(carta.fechaSolicitud), "d 'de' MMMM 'del' yyyy", { locale: es })
+        const textoFecha = `Firmado en la ciudad de la Villa de San Antonio, Comayagua, a los ${fechaEsp}.`
+
+        y = addParagraph(doc, textoVendedor, margin, y, maxWidth, lineHeight, highlightWords)
+        y += 1
+        y = addParagraph(doc, textoComprador, margin, y, maxWidth, lineHeight, highlightWords)
+        y += 1
+        y = addParagraph(doc, textoPrecio, margin, y, maxWidth, lineHeight, highlightWords)
+        y += 1
+
+        doc.setFont("Montserrat-Bold", "normal")
+        y = addParagraph(doc, textoFierro, margin, y, maxWidth, lineHeight, [])
+        doc.setFont("Roboto-Light", "normal")
+
+        doc.rect(pageWidth - 60, y - 6, 50, 20)
+        y += lineHeight * 3
+
+        doc.setFontSize(9)
+        y = addParagraph(doc, notaFinal, margin, y, maxWidth, lineHeight - 0.5)
+        y += lineHeight * 2
+
+        doc.setFontSize(10)
+        y = addParagraph(doc, textoFecha, margin, y, maxWidth, lineHeight)
+        y += lineHeight * 2
+
+        const tableX = pageWidth - margin - 50
+        const tableY = y
+        const boxWidth = 25
+        const boxHeight = 8
+
+        doc.setFontSize(9)
+        doc.setFont("Montserrat-Bold", "normal")
+        doc.text("TOMO:", tableX - 20, tableY + 6)
+        doc.text("FOLIO:", tableX - 20, tableY + boxHeight + 6)
+        doc.text("REGISTRO:", tableX - 20, tableY + boxHeight * 2 + 6)
+        doc.setFont("Roboto-Light", "normal")
+
+        doc.text(String(carta.tomo), tableX + 7, tableY + 6)
+        doc.text(String(carta.folio), tableX + 7, tableY + boxHeight + 6)
+        doc.text(String(carta.registro).padStart(3, "0"), tableX + 7, tableY + boxHeight * 2 + 6)
+
+        doc.rect(tableX, tableY, boxWidth, boxHeight)
+        doc.rect(tableX, tableY + boxHeight, boxWidth, boxHeight)
+        doc.rect(tableX, tableY + boxHeight * 2, boxWidth, boxHeight)
+
+        y += boxHeight * 3 + 10
+
+        doc.setFont("Montserrat-Bold", "normal")
+        doc.line(15, y, 90, y)
+        y += 5
+        doc.text("FIRMA DEL VENDEDOR", 15, y)
+        y += 15
+        doc.line(15, y, 90, y)
+        y += 5
+        doc.text("SELLO Y FIRMA ABOG. " + carta.nombreAbogado.toUpperCase(), 15, y)
+        y += 10
+        doc.text("DIRECTOR DE JUSTICIA MUNICIPAL", 15, y)
+
+        const fileName = `CartaVenta_${carta.numeroRegistro}.pdf`
+        doc.save(fileName)
+      })
+      .catch((err) => {
+        alert("Error al cargar imágenes para el PDF: " + err.message)
+        console.error(err)
+      })
+  }
 
   const handleVerDocumento = (carta: CartaVentaGanado) => {
-    handleReExportPDF(carta);
-  };
+    handleReExportPDF(carta)
+  }
 
-  const filteredClientes = clientes.filter(
-    (cliente) =>
-      cliente.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      cliente.apellidos.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      cliente.DNI.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredPersonas = personas.filter(
+    (persona) =>
+      (persona.p_nombre?.toLowerCase() ?? '').includes(searchTerm.toLowerCase()) ||
+      (persona.s_nombre?.toLowerCase() ?? '').includes(searchTerm.toLowerCase()) ||
+      (persona.p_apellido?.toLowerCase() ?? '').includes(searchTerm.toLowerCase()) ||
+      (persona.s_apellido?.toLowerCase() ?? '').includes(searchTerm.toLowerCase()) ||
+      (persona.dni?.toLowerCase() ?? '').includes(searchTerm.toLowerCase())
   )
 
   const handleBack = () => {
     window.location.href = "/dashboard"
   }
 
-  const getClienteById = (id: number | null): Cliente | null => {
+  const getPersonaById = (id: number | null): Persona | null => {
     if (!id) return null
-    return clientes.find((c) => c.id === id) || null
+    return personas.find((p) => p.id === id) || null
   }
 
   const getSemovienteById = (id: number | null): Semoviente | null => {
@@ -776,49 +835,49 @@ export default function DocumentosPage() {
     <div className="documentos-page min-h-screen bg-background">
       {/* Header */}
       <header className="bg-card border-b border-border px-4 py-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="flex items-center space-x-2">
-                    <img
-                      src="/logo2.png"
-                      alt="Logo"
-                      className="w-50"
-                    />
-                  </div>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm text-muted-foreground hidden sm:block">Bienvenido, Usuario</span>
-                  <Button variant="ghost" size="sm" onClick={handleLogout} className="logout-button">
-                    <MdLogout className="h-4 w-4 mr-2" />
-                    Salir
-                  </Button>
-                </div>
-              </div>
-            </header>
-            <div className="max-w-7xl mx-auto pt-5">
-                    <div className="flex items-center justify-between mb-8">
-                      <div className="flex items-center space-x-4">
-                        <Button variant="ghost" onClick={() => (window.location.href = "/dashboard")} className="regresar-btn">
-                          <ArrowLeft className="h-4 w-4 mr-2" />
-                          Panel Principal
-                        </Button>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              <img
+                src="/logo2.png"
+                alt="Logo"
+                className="w-50"
+              />
+            </div>
+          </div>
+          <div className="flex items-center space-x-2">
+            <span className="text-sm text-muted-foreground hidden sm:block titulo">Bienvenido, {userName || "Usuario"}</span>
+            <Button variant="ghost" size="sm" onClick={handleLogout} className="logout-button parrafo">
+              <MdLogout className="h-4 w-4 mr-2" />
+              Salir
+            </Button>
+          </div>
+        </div>
+      </header>
 
-                        <div>
-                          <h1 className="text-2xl text-foreground titulo flex items-center space-x-2">
-                            <FileText className="h-6 w-6 text-primary" />
-                            <span>Carta de Ventas</span>
-                          </h1>
-                          <p className="parrafo text-muted-foreground">
-                            Genere y gestione cartas de ventas
-                          </p>
-                        </div>
-                      </div>
-                      <Button onClick={() => setShowForm(true)} disabled={showForm} className="nuevo-btn">
-                        <Plus className="h-4 w-4 mr-2" />
-                        Nueva Carta
-                      </Button>
-                    </div>
-                  </div>
+      <div className="max-w-7xl mx-auto pt-5">
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center space-x-4">
+            <Button variant="ghost" onClick={() => (window.location.href = "/dashboard")} className="regresar-btn parrafo">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Panel Principal
+            </Button>
+            <div>
+              <h1 className="text-2xl text-foreground titulo flex items-center space-x-2">
+                <FileText className="h-6 w-6 text-primary" />
+                <span>Carta de Ventas</span>
+              </h1>
+              <p className="parrafo text-muted-foreground">
+                Genere y gestione cartas de ventas
+              </p>
+            </div>
+          </div>
+          <Button onClick={() => setShowForm(true)} disabled={showForm} className="nuevo-btn parrafo">
+            <Plus className="h-4 w-4 mr-2" />
+            Nueva Carta
+          </Button>
+        </div>
+      </div>
 
       <div className="p-6">
         <div className="max-w-7xl mx-auto">
@@ -833,6 +892,7 @@ export default function DocumentosPage() {
               <AlertDescription>{success}</AlertDescription>
             </Alert>
           )}
+
           {/* Formulario de carta de venta */}
           {showForm && (
             <Card className="mb-6 card-principal">
@@ -863,11 +923,12 @@ export default function DocumentosPage() {
                   <div className="space-y-2">
                     <Label>Número de Registro</Label>
                     <Input
-                      value={editingCarta ? editingCarta.numeroRegistro : generarNumeroRegistro().numeroRegistro}
+                      value={nuevoNumeroRegistro} 
                       disabled
                       className="bg-muted font-mono card-content"
                     />
                   </div>
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Vendedor *</Label>
@@ -882,31 +943,29 @@ export default function DocumentosPage() {
                       </div>
                       {searchTerm && (
                         <div className="border border-border rounded-lg max-h-48 overflow-y-auto">
-                          {filteredClientes
-                            .filter((c) => ["vendedor", "ambos"].includes(c.tipoCliente))
-                            .map((cliente) => (
-                              <div
-                                key={cliente.id}
-                                className={`p-3 cursor-pointer hover:bg-muted/50 ${
-                                  selectedVendedor?.id === cliente.id ? "bg-accent" : ""
-                                }`}
-                                onClick={() => {
-                                  setSelectedVendedor(cliente)
-                                  setFormData((prev) => ({ ...prev, vendedorId: cliente.id }))
-                                  setSearchTerm("")
-                                }}
-                              >
-                                <div className="flex items-center justify-between">
-                                  <div>
-                                    <p className="font-medium">
-                                      {cliente.nombre} {cliente.apellidos}
-                                    </p>
-                                    <p className="text-sm text-muted-foreground">{cliente.DNI}</p>
-                                  </div>
-                                  <Badge variant="secondary">Vendedor</Badge>
+                          {filteredPersonas.map((persona) => (
+                            <div
+                              key={persona.id}
+                              className={`p-3 cursor-pointer hover:bg-muted/50 ${
+                                selectedVendedor?.id === persona.id ? "bg-accent" : ""
+                              }`}
+                              onClick={() => {
+                                setSelectedVendedor(persona)
+                                setFormData((prev) => ({ ...prev, vendedorId: persona.id }))
+                                setSearchTerm("")
+                              }}
+                            >
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <p className="font-medium">
+                                    {persona.p_nombre} {persona.s_nombre} {persona.p_apellido} {persona.s_apellido}
+                                  </p>
+                                  <p className="text-sm text-muted-foreground">{persona.dni}</p>
                                 </div>
+                                <Badge variant="secondary">Seleccionar</Badge>
                               </div>
-                            ))}
+                            </div>
+                          ))}
                         </div>
                       )}
                       {selectedVendedor && (
@@ -914,9 +973,9 @@ export default function DocumentosPage() {
                           <div className="flex items-center justify-between">
                             <div>
                               <p className="font-medium">
-                                {selectedVendedor.nombre} {selectedVendedor.apellidos}
+                                {selectedVendedor.p_nombre} {selectedVendedor.s_nombre} {selectedVendedor.p_apellido} {selectedVendedor.s_apellido}
                               </p>
-                              <p className="text-sm text-muted-foreground">{selectedVendedor.DNI}</p>
+                              <p className="text-sm text-muted-foreground">{selectedVendedor.dni}</p>
                             </div>
                             <Button
                               variant="ghost"
@@ -948,6 +1007,7 @@ export default function DocumentosPage() {
                       />
                     </div>
                   </div>
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Comprador *</Label>
@@ -962,31 +1022,29 @@ export default function DocumentosPage() {
                       </div>
                       {searchTerm && (
                         <div className="border border-border rounded-lg max-h-48 overflow-y-auto">
-                          {filteredClientes
-                            .filter((c) => ["comprador", "ambos"].includes(c.tipoCliente))
-                            .map((cliente) => (
-                              <div
-                                key={cliente.id}
-                                className={`p-3 cursor-pointer hover:bg-muted/50 ${
-                                  selectedComprador?.id === cliente.id ? "bg-accent" : ""
-                                }`}
-                                onClick={() => {
-                                  setSelectedComprador(cliente)
-                                  setFormData((prev) => ({ ...prev, compradorId: cliente.id }))
-                                  setSearchTerm("")
-                                }}
-                              >
-                                <div className="flex items-center justify-between">
-                                  <div>
-                                    <p className="font-medium">
-                                      {cliente.nombre} {cliente.apellidos}
-                                    </p>
-                                    <p className="text-sm text-muted-foreground">{cliente.DNI}</p>
-                                  </div>
-                                  <Badge variant="secondary">Comprador</Badge>
+                          {filteredPersonas.map((persona) => (
+                            <div
+                              key={persona.id}
+                              className={`p-3 cursor-pointer hover:bg-muted/50 ${
+                                selectedComprador?.id === persona.id ? "bg-accent" : ""
+                              }`}
+                              onClick={() => {
+                                setSelectedComprador(persona)
+                                setFormData((prev) => ({ ...prev, compradorId: persona.id }))
+                                setSearchTerm("")
+                              }}
+                            >
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <p className="font-medium">
+                                    {persona.p_nombre} {persona.s_nombre} {persona.p_apellido} {persona.s_apellido}
+                                  </p>
+                                  <p className="text-sm text-muted-foreground">{persona.dni}</p>
                                 </div>
+                                <Badge variant="secondary">Seleccionar</Badge>
                               </div>
-                            ))}
+                            </div>
+                          ))}
                         </div>
                       )}
                       {selectedComprador && (
@@ -994,9 +1052,9 @@ export default function DocumentosPage() {
                           <div className="flex items-center justify-between">
                             <div>
                               <p className="font-medium">
-                                {selectedComprador.nombre} {selectedComprador.apellidos}
+                                {selectedComprador.p_nombre} {selectedComprador.s_nombre} {selectedComprador.p_apellido} {selectedComprador.s_apellido}
                               </p>
-                              <p className="text-sm text-muted-foreground">{selectedComprador.DNI}</p>
+                              <p className="text-sm text-muted-foreground">{selectedComprador.dni}</p>
                             </div>
                             <Button
                               variant="ghost"
@@ -1025,6 +1083,7 @@ export default function DocumentosPage() {
                       />
                     </div>
                   </div>
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Semoviente *</Label>
@@ -1044,13 +1103,14 @@ export default function DocumentosPage() {
                         <SelectContent>
                           {semovientes.map((semoviente) => (
                             <SelectItem key={semoviente.id} value={semoviente.id.toString()}>
-                              {semoviente.nombre} - {semoviente.Tipo_de_semoviente} ({semoviente.color})
+                              {semoviente.tipo_animal} - {semoviente.color}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
                   </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="observaciones">Observaciones</Label>
                     <Textarea
@@ -1063,6 +1123,7 @@ export default function DocumentosPage() {
                       className="card-content"
                     />
                   </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="nombreAbogado">Nombre del Abogado (Director de Justicia)</Label>
                     <Input
@@ -1074,6 +1135,7 @@ export default function DocumentosPage() {
                       className="card-content"
                     />
                   </div>
+
                   {editingCarta && (
                     <div className="space-y-2">
                       <Label>Estado</Label>
@@ -1097,6 +1159,7 @@ export default function DocumentosPage() {
                       </div>
                     </div>
                   )}
+
                   <div className="flex flex-wrap gap-4">
                     <Button
                       type="button"
@@ -1175,8 +1238,8 @@ export default function DocumentosPage() {
                               <div className="flex items-center space-x-2">
                                 <FileText className="h-4 w-4" />
                                 <span>
-                                  {getClienteById(carta.vendedorId)?.nombre || "Vendedor"} →{" "}
-                                  {getClienteById(carta.compradorId)?.nombre || "Comprador"}
+                                  {getPersonaById(carta.vendedorId)?.p_nombre || "Vendedor"} →{" "}
+                                  {getPersonaById(carta.compradorId)?.p_nombre || "Comprador"}
                                 </span>
                               </div>
                               <div className="flex items-center space-x-2">
@@ -1199,7 +1262,7 @@ export default function DocumentosPage() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => handleVerDocumento(carta)} 
+                                onClick={() => handleVerDocumento(carta)}
                                 className="text-blue-600 hover:text-blue-700"
                                 title="Re-exportar documento"
                               >

@@ -14,8 +14,11 @@ import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, Plus, Search, User, Save } from "lucide-react"
 import { MdLogout, MdCancel } from "react-icons/md"
 import { FaRegIdCard, FaPhoneAlt, FaHome, FaEdit, FaTrash } from "react-icons/fa"
-import { supabase } from "@/lib/supabaseClient"
+
 import { useRouter } from "next/navigation"
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+
+const supabase = createClientComponentClient();
 
 
 interface Cliente {
@@ -40,6 +43,23 @@ export default function ClientesPage() {
   const [success, setSuccess] = useState("")
 
   const router = useRouter()
+
+  const [userName, setUserName] = useState("")
+
+  useEffect(() => {
+    const getUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
+      if (user) {
+        // Si guardaste el nombre en user_metadata al registrarlo:
+        setUserName(user.user_metadata?.nombre || user.email) 
+      }
+    }
+
+    getUser()
+  }, [])
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
@@ -236,9 +256,9 @@ export default function ClientesPage() {
             </div>
           </div>
           <div className="flex items-center space-x-2">
-            <span className="text-sm text-muted-foreground hidden sm:block">Bienvenido, Usuario</span>
+            <span className="text-sm text-muted-foreground hidden sm:block titulo">Bienvenido, {userName || "Usuario"}</span>
             <Button variant="ghost" size="sm" onClick={handleLogout} className="logout-button">
-              <MdLogout className="h-4 w-4 mr-2" />
+              <MdLogout className="h-4 w-4 mr-2 parrafo" />
               Salir
             </Button>
           </div>
@@ -247,7 +267,7 @@ export default function ClientesPage() {
       <div className="max-w-7xl mx-auto pt-5">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center space-x-4">
-            <Button variant="ghost" onClick={() => (window.location.href = "/dashboard")} className="regresar-btn">
+            <Button variant="ghost" onClick={() => (window.location.href = "/dashboard")} className="regresar-btn parrafo">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Panel Principal
             </Button>
@@ -262,7 +282,7 @@ export default function ClientesPage() {
               </p>
             </div>
           </div>
-          <Button onClick={() => setShowForm(true)} disabled={showForm} className="nuevo-btn">
+          <Button onClick={() => setShowForm(true)} disabled={showForm} className="nuevo-btn parrafo">
             <Plus className="h-4 w-4 mr-2" />
             Nuevo Contribuyente
           </Button>
@@ -291,8 +311,8 @@ export default function ClientesPage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>{editingClient ? "Editar Contribuyente" : "Registrar Nuevo Contribuyente"}</CardTitle>
-                <CardDescription>
+                <CardTitle className="titulo">{editingClient ? "Editar Contribuyente" : "Registrar Nuevo Contribuyente"}</CardTitle>
+                <CardDescription className="parrafo">
                   {editingClient
                     ? "Modifique los datos del Contribuyente"
                     : "Complete la información del Contribuyente"}
@@ -326,7 +346,7 @@ export default function ClientesPage() {
               {/* Nombre y Apellido */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="nombre">Nombre *</Label>
+                  <Label htmlFor="nombre" className="parrafo2">Nombre *</Label>
                   <div className="grid grid-cols-2 gap-2">
                     <Input
                       id="nombre1"
@@ -334,19 +354,19 @@ export default function ClientesPage() {
                       onChange={(e) => handleInputChange("nombre1", e.target.value)}
                       placeholder="Primer nombre"
                       required
-                      className="card-content"
+                      className="card-content parrafo"
                     />
                     <Input
                       id="nombre2"
                       value={formData.nombre2}
                       onChange={(e) => handleInputChange("nombre2", e.target.value)}
                       placeholder="Segundo nombre"
-                      className="card-content"
+                      className="card-content parrafo"
                     />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="apellido">Apellido *</Label>
+                  <Label htmlFor="apellido" className="parrafo2">Apellido *</Label>
                   <div className="grid grid-cols-2 gap-2">
                    <Input
                       id="apellido1"
@@ -354,7 +374,7 @@ export default function ClientesPage() {
                       onChange={(e) => handleInputChange("apellido1", e.target.value)}
                       placeholder="Primer apellido"
                       required
-                      className="card-content"
+                      className="card-content parrafo"
                     />
                     <Input
                       id="apellido2"
@@ -362,7 +382,7 @@ export default function ClientesPage() {
                       onChange={(e) => handleInputChange("apellido2", e.target.value)}
                       placeholder="Segundo apellido"
                       required
-                      className="card-content"
+                      className="card-content parrafo"
                     />
                   </div>
                 </div>
@@ -371,24 +391,24 @@ export default function ClientesPage() {
               {/* DNI y RTN */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="DNI">DNI *</Label>
+                  <Label htmlFor="DNI" className="parrafo2">DNI *</Label>
                   <Input
                     id="DNI"
                     value={formData.dni}
                     onChange={(e) => handleInputChange("dni", e.target.value)}
                     placeholder="Ejemplo: 0318-2000-12345"
                     required
-                    className="card-content"
+                    className="card-content parrafo"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="RTN">RTN</Label>
+                  <Label htmlFor="RTN" className="parrafo2">RTN</Label>
                   <Input
                     id="RTN"
                     value={formData.rtn}
                     onChange={(e) => handleInputChange("rtn", e.target.value)}
                     placeholder="Ejemplo: 0318-2000-123456"
-                    className="card-content"
+                    className="card-content parrafo"
                   />
                 </div>
               </div>
@@ -396,7 +416,7 @@ export default function ClientesPage() {
               {/* Teléfono y Genero */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="telefono">Teléfono *</Label>
+                  <Label htmlFor="telefono" className="parrafo2">Teléfono *</Label>
                   <div className="grid grid-cols-2 gap-2">
                     <Input
                       id="telefono"
@@ -404,23 +424,23 @@ export default function ClientesPage() {
                       onChange={(e) => handleInputChange("telefono", e.target.value)}
                       placeholder="Ejemplo: +504 9999-9999"
                       required
-                      className="card-content"
+                      className="card-content parrafo"
                     />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="genero">Género *</Label>
+                  <Label htmlFor="genero" className="parrafo2">Género *</Label>
                   <div className="grid grid-cols-2 gap-2">
                    <Select
                       value={formData.genero}
                       onValueChange={(value) => handleInputChange("genero", value)}
                     >
-                      <SelectTrigger className="card-content">
+                      <SelectTrigger className="card-content parrafo">
                         <SelectValue placeholder="Seleccione el género" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="masculino">Masculino</SelectItem>
-                        <SelectItem value="femenino">Femenino</SelectItem>
+                        <SelectItem value="masculino" className="parrafo">Masculino</SelectItem>
+                        <SelectItem value="femenino" className="parrafo">Femenino</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -430,14 +450,14 @@ export default function ClientesPage() {
               {/* Direccion */} 
                            
               <div className="space-y-2">
-                <Label htmlFor="direccion">Dirección *</Label>
+                <Label htmlFor="direccion" className="parrafo2">Dirección *</Label>
                 <div className="grid grid-cols-2 gap-2">
                   <textarea
                     id="direccion"
                     value={formData.direccion}
                     onChange={(e) => handleInputChange("direccion", e.target.value)}
                     placeholder="Describa Aldea, caserío, barrio o colonia"
-                    className="card-content w-full border border-border rounded-md focus:ring-2 focus:ring-primary focus:border-primary"
+                    className="card-content w-full border border-border rounded-md focus:ring-2 focus:ring-primary focus:border-primary parrafo"
                     rows={3}
                     required
                   />
@@ -446,7 +466,7 @@ export default function ClientesPage() {
 
               {/* Botones */}
               <div className="flex space-x-4">
-                <Button type="submit" disabled={isLoading} className="nuevo-btn">
+                <Button type="submit" disabled={isLoading} className="nuevo-btn parrafo">
                   <Save className="h-4 w-4 mr-2" />
                   {isLoading ? "Guardando..." : editingClient ? "Actualizar Contribuyente" : "Registrar Contribuyente"}
                 </Button>
@@ -457,7 +477,7 @@ export default function ClientesPage() {
                     setShowForm(false)
                     setEditingClient(null)
                   }}
-                  className="regresar-btn"
+                  className="regresar-btn parrafo"
                 >
                   Cancelar
                 </Button>
@@ -473,8 +493,8 @@ export default function ClientesPage() {
           <CardHeader>
             <div className="flex items-center justify-between space-y-6 w-full max-w-7xl mx-auto">
               <div>
-                <CardTitle>Lista de Contribuyentes</CardTitle>
-                <CardDescription>Gestione y visualice todos los contribuyentes registrados</CardDescription>
+                <CardTitle className="titulo">Lista de Contribuyentes</CardTitle>
+                <CardDescription className="parrafo">Gestione y visualice todos los contribuyentes registrados</CardDescription>
               </div>
               <div className="flex items-center space-x-2">
                 <div className="relative card-content">
@@ -483,7 +503,7 @@ export default function ClientesPage() {
                     placeholder="Buscar contribuyentes..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 w-64"
+                    className="pl-10 w-64 parrafo"
                   />
                 </div>
               </div>
@@ -494,7 +514,7 @@ export default function ClientesPage() {
               {filteredClientes.length === 0 ? (
                 <div className="text-center py-8">
                   <User className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground">No se encontraron contribuyentes</p>
+                  <p className="text-muted-foreground parrafo">No se encontraron contribuyentes</p>
                 </div>
               ) : (
                 filteredClientes.map((cliente) => (
@@ -518,18 +538,18 @@ export default function ClientesPage() {
                             <FaPhoneAlt className="h-4 w-4" />
                             <span>{cliente.telefono}</span>
                           </div>
-                          <div className="flex items-center space-x-2 parrafo col-span-1 md:col-span-2">
+                          <div className="flex items-center space-x-3 parrafo col-span-2 md:col-span-3">
                             <FaHome className="h-4 w-4" />
                             <span>{cliente.direccion}</span>
                           </div>
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <Button variant="ghost" size="sm" onClick={() => handleEdit(cliente)}>
+                        <Button className="text-[#6D4C41]" variant="ghost" size="sm" onClick={() => handleEdit(cliente)}>
                           <FaEdit className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleDelete(cliente.id)}>
-                          <FaTrash className="h-4 w-4 text-destructive" />
+                        <Button className="text-[#C62828]" variant="ghost" size="sm" onClick={() => handleDelete(cliente.id)}>
+                          <FaTrash className="h-4 w-4" />
                         </Button>
                       </div>
                     </div>

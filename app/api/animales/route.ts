@@ -5,16 +5,22 @@ export async function GET(req: NextRequest) {
   try {
     const { data, error } = await supabaseServer
       .from("cv_semoviente")
-      .select("id, tipo_animal, color, venteado, cv_tipo_semoviente_id");
+      .select("id, tipo_animal, color, venteado, cv_tipo_semoviente_id")
+      .order("id", { ascending: false }) // ordenar del más nuevo al más viejo
+      .limit(12); // limitar a los últimos 12 registros
 
     if (error) throw error;
 
     return NextResponse.json(data);
   } catch (err) {
     console.error(err);
-    return NextResponse.json({ error: "Error al obtener tipos de semovientes" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Error al obtener tipos de semovientes" },
+      { status: 500 }
+    );
   }
 }
+
 
 export async function POST(req: NextRequest) {
   try {

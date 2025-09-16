@@ -15,14 +15,34 @@ import {
 } from "react-icons/md"
 import { PiCowDuotone } from "react-icons/pi"
 import { TbHorseshoe } from "react-icons/tb"
+import { BiDirections } from "react-icons/bi"
 // Importamos Supabase y useRouter
-import { supabase } from "@/lib/supabaseClient"
 import { useRouter } from "next/navigation"
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+
+
+const supabase = createClientComponentClient();
 
 export default function DashboardPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [userName, setUserName] = useState("")
 
   const router = useRouter()
+
+  useEffect(() => {
+    const getUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
+      if (user) {
+        // Si guardaste el nombre en user_metadata al registrarlo:
+        setUserName(user.user_metadata?.nombre || user.email) 
+      }
+    }
+
+    getUser()
+  }, [])
 
   const handleLogout = async () => {
     // Cerrar sesión en Supabase
@@ -113,7 +133,7 @@ export default function DashboardPage() {
             </div>
           </div>
           <div className="flex items-center space-x-2">
-            <span className="text-sm text-muted-foreground hidden sm:block titulo">Bienvenido, Usuario</span>
+            <span className="text-sm text-muted-foreground hidden sm:block titulo">Bienvenido, {userName || "Usuario"}</span>
             <Button variant="ghost" size="sm" onClick={handleLogout} className="logout-button parrafo">
               <MdLogout className="h-4 w-4 mr-2" />
               Salir
@@ -169,6 +189,10 @@ export default function DashboardPage() {
                   <Button variant="ghost" className="w-full justify-start boton-panel parrafo">
                     <MdSettings className="h-4 w-4 mr-3" />
                     Configuración
+                  </Button>
+                  <Button variant="ghost" className="w-full justify-start boton-panel parrafo">
+                    <BiDirections className="h-4 w-4 mr-3" />
+                    Manual de uso
                   </Button>
                 </div>
               </div>
