@@ -510,8 +510,8 @@ export default function DocumentosPage() {
         doc.setLineWidth(0.3)
         doc.rect(margin - 2, 8, contentWidth + 4, 270)
 
-        doc.addImage(logoImg as HTMLImageElement, "PNG", margin, 10, 25, 25)
-        doc.addImage(selloImg as HTMLImageElement, "PNG", pageWidth - margin - 25, 10, 25, 25)
+        doc.addImage(logoImg as HTMLImageElement, "PNG", margin, 10, 25, 15)
+        doc.addImage(selloImg as HTMLImageElement, "PNG", pageWidth - margin - 25, 10, 25, 15)
 
         doc.setFont("Montserrat-Bold", "normal")
         doc.setFontSize(12)
@@ -544,10 +544,10 @@ export default function DocumentosPage() {
           ...montoEnLetras.split(" "),
         ].filter(word => word !== "Y")
 
-        const textoVendedor = `El señor(a) ${nombreVendedor}, hondureño(a), mayor de edad, identificado(a) con DNI número ${selectedVendedor.dni}, con domicilio en ${selectedVendedor.domicilio} con teléfono ${selectedVendedor.telefono_1}, en pleno uso de sus facultades, declara la venta del semoviente descrito en este documento.`
-        const textoComprador = `El comprador(a) ${nombreComprador}, hondureño(a), mayor de edad, identificado(a) con DNI número ${selectedComprador.dni}, acepta la adquisición del semoviente en las condiciones aquí establecidas.`
+        const textoVendedor = `El vendedor ${nombreVendedor}, hondureño(a), mayor de edad, identificado(a) con DNI número ${selectedVendedor.dni}, con domicilio en ${selectedVendedor.domicilio} con teléfono ${selectedVendedor.telefono_1}, en pleno uso de sus facultades, declara la venta del semoviente descrito en este documento.`
+        const textoComprador = `El comprador ${nombreComprador}, hondureño(a), mayor de edad, identificado(a) con DNI número ${selectedComprador.dni}, acepta la adquisición del semoviente en las condiciones aquí establecidas.`
         const textoPrecio = `El semoviente vendido es de color ${selectedSemoviente.color}, herrado y marcado con el fierro que se muestra en el reverso. Se entrega en buen estado, por un valor de ${montoEnLetras}, suma que el vendedor declara haber recibido a satisfacción.`
-        const textoFierro = `El animal es de raza criolla y se encuentra identificado con la marca de fierro registrada en el reverso del presente documento.`
+        const textoFierro = `El semoviente se encuentra identificado con la marca de fierro registrada en el recuadro del presente documento.`
         const notaFinal = `Esta carta de venta es válida únicamente en su versión original. Cualquier alteración o modificación la invalida de inmediato.`
         const fechaEsp = format(new Date(formData.fechaSolicitud), "d 'de' MMMM 'del' yyyy", { locale: es })
         const textoFecha = `Firmado en la ciudad de la Villa de San Antonio, Comayagua, a los ${fechaEsp}.`
@@ -605,7 +605,7 @@ export default function DocumentosPage() {
         doc.line(15, y, 90, y)
         y += 5
         doc.text("FIRMA DEL VENDEDOR", 15, y)
-        y += 15
+        y += 25
         doc.line(15, y, 90, y)
         y += 5
         doc.text("SELLO Y FIRMA ABOG. " + formData.nombreAbogado.toUpperCase(), 15, y)
@@ -698,8 +698,8 @@ export default function DocumentosPage() {
         doc.setLineWidth(0.3)
         doc.rect(margin - 2, 8, contentWidth + 4, 270)
 
-        doc.addImage(logoImg as HTMLImageElement, "PNG", margin, 10, 25, 25)
-        doc.addImage(selloImg as HTMLImageElement, "PNG", pageWidth - margin - 25, 10, 25, 25)
+        doc.addImage(logoImg as HTMLImageElement, "PNG", margin, 10, 25, 15)
+        doc.addImage(selloImg as HTMLImageElement, "PNG", pageWidth - margin - 25, 10, 25, 15)
 
         doc.setFont("Montserrat-Bold", "normal")
         doc.setFontSize(12)
@@ -732,10 +732,10 @@ export default function DocumentosPage() {
           ...montoEnLetras.split(" "),
         ].filter(word => word !== "Y")
 
-        const textoVendedor = `El señor(a) ${nombreVendedor}, hondureño(a), mayor de edad, identificado(a) con DNI número ${vendedor.dni}, con domicilio en ${vendedor.domicilio} con teléfono ${vendedor.telefono_1}, en pleno uso de sus facultades, declara la venta del semoviente descrito en este documento.`
-        const textoComprador = `El comprador(a) ${nombreComprador}, hondureño(a), mayor de edad, identificado(a) con DNI número ${comprador.dni}, acepta la adquisición del semoviente en las condiciones aquí establecidas.`
+        const textoVendedor = `El vendedor ${nombreVendedor}, hondureño(a), mayor de edad, identificado(a) con DNI número ${vendedor.dni}, con domicilio en ${vendedor.domicilio} con teléfono ${vendedor.telefono_1}, en pleno uso de sus facultades, declara la venta del semoviente descrito en este documento.`
+        const textoComprador = `El comprador ${nombreComprador}, hondureño(a), mayor de edad, identificado(a) con DNI número ${comprador.dni}, acepta la adquisición del semoviente en las condiciones aquí establecidas.`
         const textoPrecio = `El semoviente vendido es de color ${semoviente.color}, herrado y marcado con el fierro que se muestra en el reverso. Se entrega en buen estado, por un valor de ${montoEnLetras}, suma que el vendedor declara haber recibido a satisfacción.`
-        const textoFierro = `El animal es de raza criolla y se encuentra identificado con la marca de fierro registrada en el reverso del presente documento.`
+        const textoFierro = `El semoviente se encuentra identificado con la marca de fierro registrada en el recuadro del presente documento.`
         const notaFinal = `Esta carta de venta es válida únicamente en su versión original. Cualquier alteración o modificación la invalida de inmediato.`
         const fechaEsp = format(new Date(carta.fechaSolicitud), "d 'de' MMMM 'del' yyyy", { locale: es })
         const textoFecha = `Firmado en la ciudad de la Villa de San Antonio, Comayagua, a los ${fechaEsp}.`
@@ -788,7 +788,7 @@ export default function DocumentosPage() {
         doc.line(15, y, 90, y)
         y += 5
         doc.text("FIRMA DEL VENDEDOR", 15, y)
-        y += 15
+        y += 25
         doc.line(15, y, 90, y)
         y += 5
         doc.text("SELLO Y FIRMA ABOG. " + carta.nombreAbogado.toUpperCase(), 15, y)
@@ -1109,19 +1109,6 @@ export default function DocumentosPage() {
                         </SelectContent>
                       </Select>
                     </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="observaciones">Observaciones</Label>
-                    <Textarea
-                      id="observaciones"
-                      value={formData.observaciones}
-                      onChange={(e) => handleInputChange("observaciones", e.target.value)}
-                      placeholder="Notas adicionales sobre la transacción..."
-                      rows={3}
-                      disabled={editingCarta?.estado === "confirmado"}
-                      className="card-content"
-                    />
                   </div>
 
                   <div className="space-y-2">

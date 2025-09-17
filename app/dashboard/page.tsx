@@ -230,7 +230,9 @@ export default function DashboardPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold parrafo2">
-                    {totales.contribuyentes !== null ? totales.contribuyentes.toLocaleString() : <p className="text-muted-foreground parrafo">Cargando...</p>}
+                    {totales?.contribuyentes != null
+                      ? totales.contribuyentes.toLocaleString()
+                      : <p className="text-muted-foreground parrafo">Cargando...</p>}
                   </div>
                 </CardContent>
               </Card>
