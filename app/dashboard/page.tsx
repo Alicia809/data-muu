@@ -186,10 +186,10 @@ export default function DashboardPage() {
                   Herramientas
                 </h2>
                 <div className="space-y-1">
-                  <Button variant="ghost" className="w-full justify-start boton-panel parrafo">
+                  {/* <Button variant="ghost" className="w-full justify-start boton-panel parrafo">
                     <MdSettings className="h-4 w-4 mr-3" />
                     Configuración
-                  </Button>
+                  </Button> */}
                   <Button variant="ghost" className="w-full justify-start boton-panel parrafo">
                     <BiDirections className="h-4 w-4 mr-3" />
                     Manual de uso
