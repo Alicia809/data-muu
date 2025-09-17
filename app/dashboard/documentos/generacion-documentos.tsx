@@ -204,7 +204,7 @@ export default function DocumentosPage() {
       fechaRegistro: null,
       observaciones: "",
       estado: "borrador",
-      nombreAbogado: "Carlos Suazo",
+      nombreAbogado: "Lucas Martínez",
     })
     setSelectedVendedor(null)
     setSelectedComprador(null)
@@ -224,7 +224,7 @@ export default function DocumentosPage() {
     fechaRegistro: null as string | null,
     observaciones: "",
     estado: "borrador" as "borrador" | "confirmado",
-    nombreAbogado: "Carlos Suazo",
+    nombreAbogado: "Lucas Martínez",
   })
 
   const handleInputChange = (field: string, value: string) => {
@@ -515,12 +515,12 @@ export default function DocumentosPage() {
 
         doc.setFont("Montserrat-Bold", "normal")
         doc.setFontSize(12)
-        doc.text("Municipalidad de la Villa de San Antonio", pageWidth / 2, y, { align: "center" })
+        doc.text("Municipalidad de [Nombre del municipio]", pageWidth / 2, y, { align: "center" })
         y += 6
         doc.setFontSize(11)
         doc.text("Departamento de Comayagua", pageWidth / 2, y, { align: "center" })
         y += 6
-        doc.text("Tel: 2784-1217", pageWidth / 2, y, { align: "center" })
+        doc.text("Tel: 2487-1712", pageWidth / 2, y, { align: "center" })
         y += 12
 
         doc.setFontSize(14)
@@ -550,7 +550,7 @@ export default function DocumentosPage() {
         const textoFierro = `El semoviente se encuentra identificado con la marca de fierro registrada en el recuadro del presente documento.`
         const notaFinal = `Esta carta de venta es válida únicamente en su versión original. Cualquier alteración o modificación la invalida de inmediato.`
         const fechaEsp = format(new Date(formData.fechaSolicitud), "d 'de' MMMM 'del' yyyy", { locale: es })
-        const textoFecha = `Firmado en la ciudad de la Villa de San Antonio, Comayagua, a los ${fechaEsp}.`
+        const textoFecha = `Firmado en la ciudad de [Nombre del municipio], Comayagua, a los ${fechaEsp}.`
 
         y = addParagraph(doc, textoVendedor, margin, y, maxWidth, lineHeight, highlightWords)
         y += 1
@@ -703,12 +703,12 @@ export default function DocumentosPage() {
 
         doc.setFont("Montserrat-Bold", "normal")
         doc.setFontSize(12)
-        doc.text("Municipalidad de la Villa de San Antonio", pageWidth / 2, y, { align: "center" })
+        doc.text("Municipalidad de [Nombre del municipio]", pageWidth / 2, y, { align: "center" })
         y += 6
         doc.setFontSize(11)
         doc.text("Departamento de Comayagua", pageWidth / 2, y, { align: "center" })
         y += 6
-        doc.text("Tel: 2784-1217", pageWidth / 2, y, { align: "center" })
+        doc.text("Tel: 2487-1712", pageWidth / 2, y, { align: "center" })
         y += 12
 
         doc.setFontSize(14)
@@ -738,7 +738,7 @@ export default function DocumentosPage() {
         const textoFierro = `El semoviente se encuentra identificado con la marca de fierro registrada en el recuadro del presente documento.`
         const notaFinal = `Esta carta de venta es válida únicamente en su versión original. Cualquier alteración o modificación la invalida de inmediato.`
         const fechaEsp = format(new Date(carta.fechaSolicitud), "d 'de' MMMM 'del' yyyy", { locale: es })
-        const textoFecha = `Firmado en la ciudad de la Villa de San Antonio, Comayagua, a los ${fechaEsp}.`
+        const textoFecha = `Firmado en la ciudad de [Nombre del municipio], Comayagua, a los ${fechaEsp}.`
 
         y = addParagraph(doc, textoVendedor, margin, y, maxWidth, lineHeight, highlightWords)
         y += 1
@@ -1117,7 +1117,7 @@ export default function DocumentosPage() {
                       id="nombreAbogado"
                       value={formData.nombreAbogado}
                       onChange={(e) => handleInputChange("nombreAbogado", e.target.value)}
-                      placeholder="Carlos Suazo"
+                      placeholder="Lucas Martínez"
                       disabled={editingCarta?.estado === "confirmado"}
                       className="card-content"
                     />
